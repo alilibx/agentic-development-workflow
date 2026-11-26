@@ -12,7 +12,7 @@ Claude Code [hooks](https://docs.claude.com/en/docs/claude-code/hooks) run a com
 
 We learned the first row the hard way. Blocking commits to `main` with a `PreToolUse` hook meant parsing shell text (`cd`, `-C`, `GIT_DIR=`, aliases) to guess the branch, and it could always be bypassed. The [git hook](/workflow/branching#the-pre-commit-hook) asks git, which knows.
 
-## The PR-lifecycle hook
+## The PR-lifecycle hook {#the-pr-lifecycle-hook}
 
 One `PostToolUse` hook on `Bash` runs [`.claude/hooks/pr-lifecycle.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.sh):
 
@@ -69,7 +69,7 @@ grep -Eq "(^|[;&|(]|&&)[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space
 
 It needs `jq`. Without it, the hook can't read its input, so it prints one warning when the command mentions `gh pr`, and nothing otherwise. Build the output JSON with `jq -n --arg`, not by hand-escaping strings.
 
-## Testing a hook
+## Testing a hook {#testing-a-hook}
 
 Feed it the JSON Claude Code would send, and read what it prints:
 

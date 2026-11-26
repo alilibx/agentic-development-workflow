@@ -51,7 +51,7 @@ Public repos get all of them on every plan. GitHub has changed these rules befor
 The template works on every plan, and gets stronger when environments are available:
 
 - **Default: suffixed repository secrets.** `deploy.yml` reads `DEPLOY_TOKEN_STAGING` or `DEPLOY_TOKEN_PRODUCTION`, and `HEALTH_URL_STAGING` or `HEALTH_URL_PRODUCTION`, picking the suffix from two literal strings. A missing value fails the step; nothing falls back to the other tier.
-- **Upgrade: environments.** When your plan has them, move each suffixed secret into its environment (keep the names), and uncomment `environment: ${{ inputs.environment }}` in `deploy.yml`. You get deployment rules (only tags deploy to `production`), and on Enterprise or a public repo, a required reviewer on production: the approval gate that is the target.
+- **Upgrade: environments.** When your plan has them, move each suffixed secret into its environment (keep the names), and uncomment the `environment:` line of the `deploy` job in `deploy.yml`. You get deployment rules (only tags deploy to `production`), and on Enterprise or a public repo, a required reviewer on production: the approval gate that is the target.
 
 Say in your project's `docs/engineering/ci-cd.md` which mode you're in. If you're on the default, say the production approval gate is deferred and why, so nobody assumes it exists.
 
@@ -91,7 +91,7 @@ When a release has a backend and one or more frontends:
 - **Roll back in reverse order:** the frontend first, then the backend.
 - **Build once, promote.** Promoting the exact artifact that ran on staging is safer than rebuilding from the tag at release time. If you rebuild, say so.
 
-## Alerts
+## Alerts {#alerts}
 
 Send deploy results to a phone, with a priority ladder. The template's [`notify` action](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/actions/notify/action.yml) uses [ntfy](https://ntfy.sh); swap the provider and keep the rules.
 

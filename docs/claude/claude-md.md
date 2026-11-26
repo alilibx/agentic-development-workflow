@@ -16,7 +16,7 @@ Codex, Cursor and other agents read `AGENTS.md` directly, and Claude reads it th
 
 | File | Scope | Holds |
 |---|---|---|
-| `~/.claude/CLAUDE.md` | You, in every project | Personal preferences: how you like answers, your shell, tools you always use. **No project rules.** |
+| `~/.claude/CLAUDE.md` | You, in every project | Your fallbacks for any repo: branching, merge cleanup, worktrees, tracker habits, how the agent writes. **No project rules.** See [Global and repo instructions](/claude/global). |
 | `<repo>/AGENTS.md` (via `CLAUDE.md`) | Everyone in this repo | The workflow, standards, surfaces, skills by area |
 | `<repo>/<package>/CLAUDE.md` | Work inside that package | Gotchas specific to that package |
 | `.claude/settings.local.json` | You, in this repo | Personal permission allows. **Gitignored.** |
@@ -46,7 +46,7 @@ The [template](https://github.com/alilibx/agentic-development-workflow/blob/main
 - **Fence vendor-managed blocks.** If a tool writes into your `CLAUDE.md` (`<!-- vendor-start --> … <!-- vendor-end -->`), leave its block alone and write your rules outside it.
 - **State precedence when files conflict.** If a nested file says "only touch this app" and the root says "every affected surface is in scope", say which one wins.
 
-## Attribution
+## Attribution {#attribution}
 
 Pick one policy, and set it in both the settings file and `AGENTS.md`. Whether AI tools are credited is a choice, not a rule. The template's choice is the strict one: **no AI co-author trailer on commits, and no "generated with" footer on PRs.** The human who merges owns the change.
 

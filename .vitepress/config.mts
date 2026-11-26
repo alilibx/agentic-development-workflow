@@ -59,6 +59,7 @@ export default withMermaid(defineConfig({
         items: [
           { text: 'Overview', link: '/claude/' },
           { text: 'CLAUDE.md and AGENTS.md', link: '/claude/claude-md' },
+          { text: 'Global and repo instructions', link: '/claude/global' },
           { text: 'Skills', link: '/claude/skills' },
           { text: 'Sub-agents', link: '/claude/agents' },
           { text: 'Hooks', link: '/claude/hooks' },

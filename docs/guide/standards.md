@@ -19,6 +19,18 @@ These are the defaults for every task, for humans and agents alike. They live in
 - **Comment the *why*, with a source.** When a choice would surprise a reader, leave one line with the reason and a link: "v5's `prepareSecondFactor`, because v6's `sendEmailCode` doesn't exist in our pinned version." That's the only kind of comment we want.
 - **Name the incident.** Guards in workflows, hooks and code carry the issue or PR that made them necessary. A future reader who wants to delete the guard can read why it exists.
 
+- **Probe generators before you run them.** Code generators and component CLIs have read-only modes (`--diff`, `--dry-run`, `view`); use them freely. A write that replaces an existing file (`add --overwrite`) silently discards local changes, so it needs the developer's approval, and the review bot can be told to flag it.
+
+## Turn invariants into tests {#invariants-as-tests}
+
+"Rules a machine enforces" applies inside the code too. A rule that matters across the codebase ("every public endpoint checks auth", "the data wipe covers every table", "only the ledger service writes ledger rows") gets a test that fails when someone breaks it, not a sentence in `AGENTS.md`.
+
+- **Coverage tests over the schema.** Walk every table (or model) and require each one to be classified: wiped or preserved by the data wipe, included or excluded from the export, seeded or not. A new table fails the test until someone decides.
+- **Ratchets.** When a rule has existing exceptions, list them in the test with a reason each. **The list may shrink; it may not grow.** A new public endpoint without an auth check fails, and the fix is the check, not a new list entry.
+- **Single-writer and chokepoint scans.** A test fails if anything other than the owning module writes a table, or calls a vendor endpoint other than through the one gated function.
+- **Walk the runtime structure, not source text.** Import the schema or router and iterate what is really registered. A grep over source files misses generated and re-exported code, and matches comments.
+- **Name the test next to the rule.** In `AGENTS.md`, each domain rule reads `<invariant>, enforced by <test path>`, so a reader knows it is checked and where.
+
 ## Pre-production: no backward compatibility
 
 Until real users depend on your data or API, backward-compatibility thinking only adds weight: duplicate functions, optional arguments kept for old callers, dead flags, renamed fields kept "just in case", and deprecation wrappers that never get removed.
@@ -50,3 +62,14 @@ The agent is told to be a senior peer, not a yes-man. The same goes for people.
 - Report outcomes as they are. Failing tests, skipped steps and unverified claims all get said out loud.
 
 > **The test:** if a response would make the author feel better without making the code or product better, rewrite it.
+
+## How the agent writes {#how-the-agent-writes}
+
+Answers, PR descriptions, comments and docs follow one voice. The global [`plain-voice` skill](/claude/global#plain-voice) carries it for every repo.
+
+- **Answer first.** Lead with the answer or the finding. No "Sure,", no "Great question", no restating the request.
+- **Active voice, present tense.** Name who does what: "your config breaks the build", not "the build is broken".
+- **No filler.** Cut "just", "simply", "easily", "obviously", and comments about the reply itself ("to be clear", "long story short").
+- **No em-dashes in copy.** One idea per sentence. Product copy, docs and messages use full stops and commas.
+- **Code font for code.** Identifiers, commands and paths go in backticks, never bold.
+- **Honesty wins.** When a style rule and the honesty rules above conflict, honesty wins: plain words never mean softening a verdict or hedging a bad-code call.
