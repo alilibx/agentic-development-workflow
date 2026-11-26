@@ -1,6 +1,7 @@
 {
   "name": "agentic-development-workflow",
   "private": true,
+  "description": "Agentic Development Workflow: a manual and templates for taking a change from a tracker issue to production with coding agents.",
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",

@@ -6,7 +6,7 @@ const repo = 'https://github.com/alilibx/agentic-development-workflow'
 export default withMermaid(defineConfig({
   srcDir: 'docs',
   base: '/agentic-development-workflow/',
-  title: 'Manzilo Workflow',
+  title: 'Agentic Development Workflow',
   description: 'How we take a change from a tracker issue to production, with Claude Code doing much of the work. A manual any project can adopt.',
   lang: 'en',
   cleanUrls: true,

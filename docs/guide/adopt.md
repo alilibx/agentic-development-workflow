@@ -80,7 +80,7 @@ List them in `AGENTS.md` under "Skills to load by area". See [Skills](/claude/sk
 
 ## 6. Open the PR
 
-Commit with `chore: adopt the Manzilo workflow` and open a PR. Because it is mostly markdown, the review bot will skip most of it, so ask for a human review. That's the first rule of [Pull requests and review](/workflow/pull-requests) in action.
+Commit with `chore: adopt the agentic development workflow` and open a PR. Because it is mostly markdown, the review bot will skip most of it, so ask for a human review. That's the first rule of [Pull requests and review](/workflow/pull-requests) in action.
 
 ## What to leave out
 

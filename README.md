@@ -1,4 +1,4 @@
-# Manzilo Workflow
+# Agentic Development Workflow
 
 How we take a change from a tracker issue to production, with [Claude Code](https://docs.claude.com/en/docs/claude-code) doing much of the work. It is written as a manual that any project can adopt, with templates you can copy.
 

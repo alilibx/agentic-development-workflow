@@ -1,6 +1,6 @@
 # What this is
 
-This is the process we use to build [Manzilo](https://manzilo.com), a property management platform. It is written so that another project can adopt it. It covers how work is picked, how code reaches `main`, how `main` reaches production, and how Claude Code fits into each step.
+This is the Agentic Development Workflow: a process for building software with a coding agent doing much of the work. It started as the process behind [Manzilo](https://manzilo.com), a property management platform, and was later carried into several other projects. It is written so that another project can adopt it. It covers how work is picked, how code reaches `main`, how `main` reaches production, and how Claude Code fits into each step.
 
 It was written for a team of two developers, one QA engineer, and a lot of agent work. Nothing in it breaks with ten developers.
 
