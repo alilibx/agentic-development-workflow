@@ -3,10 +3,9 @@
 # review policy and the tracker move to In Review. After `gh pr merge` it starts
 # the /task done ritual. It only adds context; it never blocks (always exit 0).
 #
-# Matching: every line of the command is checked, except heredoc bodies, and
-# quoted strings are blanked first. `gh pr create` must start a command: at the
-# start of a line or after ; & | ( or &&, optionally after VAR=value prefixes
-# and gh's -R/--repo flag. A plain substring match also fires on heredocs,
+# Matching is done by runs-gh-pr.sh, next to this file: `gh pr create` must
+# start a command that bash would run, not appear in a quoted string, a
+# heredoc body or a comment. A plain substring match also fires on heredocs,
 # commit messages and echo lines that merely mention the command.
 #
 # Needs jq. Without it, the hook warns once per PR command and does nothing else.
@@ -29,41 +28,19 @@ fi
 
 command_text=$(printf '%s' "$input" | jq -r '.tool_input.command // ""')
 
-# Print the lines that can start a command: heredoc bodies are dropped, and
-# single- and double-quoted strings are blanked.
-command_lines() {
-  printf '%s\n' "$command_text" | awk -v sq="'" '
-    BEGIN {
-      heredoc = "<<-?[ \t]*[" sq "\"]?[A-Za-z_][A-Za-z0-9_]*[" sq "\"]?"
-      dquoted = "\"[^\"]*\""
-      squoted = sq "[^" sq "]*" sq
-    }
-    in_doc {
-      line = $0
-      if (strip_tabs) sub(/^\t+/, "", line)
-      if (line == delim) in_doc = 0
-      next
-    }
-    {
-      probe = $0
-      gsub(/<<</, "", probe)              # a here-string is not a heredoc
-      if (match(probe, heredoc)) {
-        tok = substr(probe, RSTART, RLENGTH)
-        strip_tabs = (tok ~ /^<<-/)
-        sub(/^<<-?[ \t]*/, "", tok)
-        gsub("[" sq "\"]", "", tok)
-        delim = tok
-        in_doc = 1
-      }
-      line = $0
-      gsub(dquoted, "\"\"", line)
-      gsub(squoted, sq sq, line)
-      print line
-    }'
-}
+matcher="$(dirname "$0")/runs-gh-pr.sh"
+if [ ! -f "$matcher" ]; then
+  case "$command_text" in
+    *"gh pr"*|*"gh -R"*|*"gh --repo"*)
+      jq -cn --arg ctx "The PR-lifecycle hook (.claude/hooks/pr-lifecycle.sh) can't find $matcher, so its PR reminders are off. Tell the developer to restore it from the workflow templates (and check .gitignore doesn't hide .claude/hooks/)." \
+        '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $ctx}}'
+      ;;
+  esac
+  exit 0
+fi
 
 matches() {
-  command_lines | grep -Eq "(^|[;&|(]|&&)[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*gh([[:space:]]+(-R|--repo)([[:space:]]+|=)[^[:space:]]+)?[[:space:]]+pr[[:space:]]+$1([[:space:]]|$)"
+  printf '%s\n' "$command_text" | sh "$matcher" "$1"
 }
 
 emit() {

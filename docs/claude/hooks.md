@@ -44,15 +44,21 @@ It only adds context, and always exits 0, so it can never block the agent.
 
 ### Match the command, not the text
 
-Our first version matched `*"gh pr create"*` anywhere in the command. It fired on heredocs, commit messages and `echo` lines that only *mention* the command, and told the agent a PR existed when none did. The template:
+Our first version matched `*"gh pr create"*` anywhere in the command. It fired on heredocs, commit messages and `echo` lines that only *mention* the command, and told the agent a PR existed when none did. A second version blanked quotes and heredocs one line at a time with regexes, and missed the cases that span lines: a commit message whose second line mentions `gh pr merge`, or `url="$(gh pr create --fill)"`, where the quotes hid a command that really runs.
 
-1. drops heredoc bodies (from the `<<EOF` line to its closing `EOF`);
-2. blanks single- and double-quoted strings;
-3. checks every remaining line for `gh pr create` at the start of a command: at the start of the line or after `;`, `&`, `|`, `(` or `&&`, optionally after `VAR=value` prefixes and `gh`'s `-R`/`--repo` flag.
+So the matching lives in [`.claude/hooks/runs-gh-pr.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/runs-gh-pr.sh), a small tokenizer in POSIX awk (gawk, mawk, BusyBox and BSD awk) that walks the command once, character by character, and keeps its state across lines:
+
+1. **Quotes.** Single-quoted text is dropped. Double-quoted text is dropped too, except a `$(...)` or backticks inside it: bash runs those, so they stay.
+2. **Command substitutions.** Each `$(...)` and `` `...` `` becomes a line of its own.
+3. **Heredocs.** A `<<` starts one only outside quotes and outside arithmetic, so `echo "cat <<EOF"` and `$((1<<2))` don't. The delimiter can be any word, quoted or not (`<<'END-OF-NOTES'`). The body is dropped up to the line that is exactly that word, with leading tabs stripped for `<<-`.
+4. **Comments** are dropped.
+5. **The match.** On each remaining line, `gh pr create` must start a command: at the start of the line or after `;`, `&`, `|`, `(` or `&&`, optionally after `VAR=value` prefixes and `gh`'s `-R`/`--repo` flag.
 
 ```sh
 grep -Eq "(^|[;&|(]|&&)[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*gh([[:space:]]+(-R|--repo)([[:space:]]+|=)[^[:space:]]+)?[[:space:]]+pr[[:space:]]+create([[:space:]]|$)"
 ```
+
+The [global fallback hook](/claude/global#a-global-hook-that-defers-to-the-repo) ships an identical copy of the same script, so both hooks agree on what counts as running the command.
 
 | Command | Fires? |
 |---|---|
@@ -62,12 +68,16 @@ grep -Eq "(^|[;&|(]|&&)[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space
 | `gh -R owner/repo pr create` | yes |
 | `git push`, then `gh pr create` on the next line | yes |
 | `gh pr create --body "$(cat <<'EOF' … EOF)"` | yes |
+| `url="$(gh pr create --fill)"`, or the same in backticks | yes |
+| A real command after `echo "cat <<EOF"`, `$((1<<y))` or a `<<'END-OF-NOTES'` heredoc | yes |
 | `echo "remember gh pr create"` | no |
 | `git commit -m "docs: x; gh pr create later"` | no |
+| A commit message whose second line mentions `gh pr merge` | no |
+| `# then gh pr create` (a comment) | no |
 | A heredoc whose body mentions `gh pr create` | no |
 | `gh pr view 12` | no |
 
-It needs `jq`. Without it, the hook can't read its input, so it prints one warning when the command mentions `gh pr`, and nothing otherwise. Build the output JSON with `jq -n --arg`, not by hand-escaping strings.
+It needs `jq` and `runs-gh-pr.sh` next to it. Without either, it prints one warning when the command mentions `gh pr`, and nothing otherwise. Build the output JSON with `jq -n --arg`, not by hand-escaping strings.
 
 ## Testing a hook {#testing-a-hook}
 
@@ -78,7 +88,7 @@ jq -cn --arg c 'gh pr merge 12 --squash' '{tool_input:{command:$c}}' \
   | .claude/hooks/pr-lifecycle.sh | jq .
 ```
 
-[`pr-lifecycle.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.test.sh) runs every row of the table above, and more: `bash .claude/hooks/pr-lifecycle.test.sh`. Add a row whenever the hook misfires.
+[`pr-lifecycle.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.test.sh) runs every row of the table above, and more, once with each awk installed (gawk, mawk, BusyBox): `bash .claude/hooks/pr-lifecycle.test.sh`. Add a row whenever the hook misfires.
 
 ## Settings files {#settings-files}
 

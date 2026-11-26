@@ -21,7 +21,8 @@ It never overwrites existing files, and it never copies `global/`. See [Adopt it
 |---|---|---|
 | [`.claude/settings.json`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/settings.json) | Attribution off, plus the PR-lifecycle hook | [Hooks](/claude/hooks) |
 | [`.claude/hooks/pr-lifecycle.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.sh) | Review policy after `gh pr create`; `/task done` after `gh pr merge` | [Hooks](/claude/hooks) |
-| [`.claude/hooks/pr-lifecycle.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.test.sh) | 23 command shapes the hook must and mustn't fire on | [Hooks](/claude/hooks#testing-a-hook) |
+| [`.claude/hooks/runs-gh-pr.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/runs-gh-pr.sh) | The matcher: does this shell command really run `gh pr create`? | [Hooks](/claude/hooks#match-the-command-not-the-text) |
+| [`.claude/hooks/pr-lifecycle.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.test.sh) | 44 command shapes the hook must and mustn't fire on, run with each installed awk | [Hooks](/claude/hooks#testing-a-hook) |
 | [`.claude/skills/task/SKILL.md`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/skills/task/SKILL.md) | `/task`, `/task start`, `/task done` | [The task loop](/workflow/task-loop) |
 | [`.claude/agents/docs-auditor.md`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/agents/docs-auditor.md) | Docs drift, before and after a task | [Sub-agents](/claude/agents) |
 | [`.claude/agents/code-reviewer.md`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/agents/code-reviewer.md) | Review before the PR | [Sub-agents](/claude/agents) |
