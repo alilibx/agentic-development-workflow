@@ -150,4 +150,4 @@ END {
   for (k = sp; k >= 1; k--) if (ctx[k] == "P" || ctx[k] == "B" || ctx[k] == "N") side = side buf[k] "\n"
   printf "%s", side
 }
-' | grep -Eq "(^|[;&|(]|&&)[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*gh([[:space:]]+(-R|--repo)([[:space:]]+|=)[^[:space:]]+)?[[:space:]]+pr[[:space:]]+$verb([[:space:]]|$)"
+' | grep -Eq "(^|[;&|(]|&&)[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*gh([[:space:]]+(-R|--repo)([[:space:]]+|=)[^[:space:]]+)?[[:space:]]+pr[[:space:]]+$verb([[:space:];&|)]|$)"

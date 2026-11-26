@@ -10,11 +10,12 @@ HOOK="$(cd "$(dirname "$0")" && pwd)/pr-lifecycle.sh"
 pass=0
 fail=0
 
-# expect <create|merge|none> <description> <command>
+# expect <create|merge|both|none> <description> <command>
 expect() {
   local want="$1" desc="$2" cmd="$3" out got
   out=$(jq -cn --arg c "$cmd" '{tool_input:{command:$c}}' | AWK="$awk" sh "$HOOK")
   case "$out" in
+    *"ran both gh pr create and gh pr merge"*) got=both ;;
     *"pull request was just created"*) got=create ;;
     *"PR merge command just ran"*) got=merge ;;
     "") got=none ;;
@@ -33,6 +34,9 @@ nl=$'\n'
 
 run_cases() {
   expect create "plain gh pr create" 'gh pr create --fill'
+  expect create "operator right after the verb" 'gh pr create; echo done'
+  expect merge  "&& right after the verb" 'gh pr merge&&echo x'
+  expect both   "create and merge in one command" 'gh -R o/r pr create --fill && gh pr merge --squash'
   expect create "after git push &&" 'git push -u origin HEAD && gh pr create --fill'
   expect create "after a semicolon" 'git push; gh pr create --fill'
   expect create "inside a subshell" '(cd app && gh pr create --fill)'
