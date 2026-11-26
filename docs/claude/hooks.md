@@ -14,7 +14,7 @@ We learned the first row the hard way. Blocking commits to `main` with a `PreToo
 
 ## The PR-lifecycle hook
 
-One `PostToolUse` hook on `Bash` runs [`.claude/hooks/pr-lifecycle.sh`](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.sh):
+One `PostToolUse` hook on `Bash` runs [`.claude/hooks/pr-lifecycle.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/hooks/pr-lifecycle.sh):
 
 ```json
 {

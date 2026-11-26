@@ -16,7 +16,7 @@ Never collapse these steps.
 
 ## How migrations run
 
-- **CI runs pending migrations after every deploy,** and blocks until they finish (see the `Migrations` step in [`deploy.yml`](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.github/workflows/deploy.yml)). When nothing is pending it does nothing, so a backfill lands the moment its schema does, with no manual step.
+- **CI runs pending migrations after every deploy,** and blocks until they finish (see the `Migrations` step in [`deploy.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/deploy.yml)). When nothing is pending it does nothing, so a backfill lands the moment its schema does, with no manual step.
 - Migrations live in **one ordered list**. Append to it; never reorder it.
 - The run prints each migration's status and the number of rows processed, so the CI log is the proof.
 - For SQL databases, every schema change is a committed migration file from your ORM (Prisma, Drizzle, Alembic…). Apply them in the same CI step.

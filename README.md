@@ -2,7 +2,7 @@
 
 How we take a change from a tracker issue to production, with [Claude Code](https://docs.claude.com/en/docs/claude-code) doing much of the work. It is written as a manual that any project can adopt, with templates you can copy.
 
-**Read it:** https://alilibx.github.io/manzilo-workflow/
+**Read it:** https://alilibx.github.io/agentic-development-workflow/
 
 ## What's here
 
@@ -15,17 +15,17 @@ How we take a change from a tracker issue to production, with [Claude Code](http
 ## Adopt it
 
 ```sh
-git clone https://github.com/alilibx/manzilo-workflow
-manzilo-workflow/scripts/adopt.sh /path/to/your-project
+git clone https://github.com/alilibx/agentic-development-workflow
+agentic-development-workflow/scripts/adopt.sh /path/to/your-project
 ```
 
-Then follow [Adopt it in a project](https://alilibx.github.io/manzilo-workflow/guide/adopt).
+Then follow [Adopt it in a project](https://alilibx.github.io/agentic-development-workflow/guide/adopt).
 
 ## Work on the manual
 
 ```sh
 bun install
-bun run dev          # http://localhost:5173/manzilo-workflow/
+bun run dev          # http://localhost:5173/agentic-development-workflow/
 bun run build
 bash templates/.githooks/pre-commit.test.sh
 ```

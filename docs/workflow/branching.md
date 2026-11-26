@@ -55,7 +55,7 @@ If your repo merges with merge commits, every commit in the PR lands on `main` a
 
 ## The pre-commit hook
 
-A git hook, not a promise, keeps commits off `main`. [`.githooks/pre-commit`](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.githooks/pre-commit) refuses any commit while the current branch is `main`:
+A git hook, not a promise, keeps commits off `main`. [`.githooks/pre-commit`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/pre-commit) refuses any commit while the current branch is `main`:
 
 ```sh
 branch=$(git branch --show-current 2>/dev/null)

@@ -20,9 +20,9 @@ flowchart TB
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| [`ci.yml`](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.github/workflows/ci.yml) | Every PR, and called by `main.yml` | The checks from `AGENTS.md`, one job per package; generated code is fresh; docs build |
-| [`main.yml`](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.github/workflows/main.yml) | Push to `main` | CI → staging deploy → release-please → production deploy if a release was cut |
-| [`deploy.yml`](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.github/workflows/deploy.yml) | Called by `main.yml`, or run by hand for a rollback | Deploy, migrate, verify the live revision. Production accepts release tags only. |
+| [`ci.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/ci.yml) | Every PR, and called by `main.yml` | The checks from `AGENTS.md`, one job per package; generated code is fresh; docs build |
+| [`main.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/main.yml) | Push to `main` | CI → staging deploy → release-please → production deploy if a release was cut |
+| [`deploy.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/deploy.yml) | Called by `main.yml`, or run by hand for a rollback | Deploy, migrate, verify the live revision. Production accepts release tags only. |
 
 Release-please runs **after** staging succeeds, so production only gets code that reached staging first.
 

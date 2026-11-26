@@ -25,7 +25,7 @@ Nested files are for **"gotchas that bit us twice"**: run the UI-kit CLI from in
 
 ## What goes in the root file
 
-The [template](https://github.com/alilibx/manzilo-workflow/blob/main/templates/AGENTS.md) has these sections, in this order:
+The [template](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/AGENTS.md) has these sections, in this order:
 
 1. **Project at a glance.** One paragraph, plus a table of packages with the commands that check each one. The commands are the most important line in the file: they define "works".
 2. **Domain rules that must never break.** Money is integer minor units. Only one service writes ledger rows. "Is this allowed?" is answered in exactly one place.

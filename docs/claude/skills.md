@@ -23,7 +23,7 @@ If a skill exists for the code you're touching and you skip it, you're guessing.
 
 ## Writing a procedure skill
 
-The [`/task` skill](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.claude/skills/task/SKILL.md) shows the shape:
+The [`/task` skill](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/skills/task/SKILL.md) shows the shape:
 
 - **The description names the triggers:** "Use when a developer asks what's next, wants to start an issue, or has finished one."
 - **Modes**, each with numbered steps.

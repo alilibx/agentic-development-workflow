@@ -4,7 +4,7 @@
 
 We use [Linear](https://linear.app). The skill assumes Linear's hierarchy (initiative → project → issue), and maps onto other trackers easily (epic or milestone → issue).
 
-The loop runs through one skill, `/task`, in three modes. The skill ([template](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.claude/skills/task/SKILL.md)) is the executable source of truth. This page is the human contract behind it.
+The loop runs through one skill, `/task`, in three modes. The skill ([template](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.claude/skills/task/SKILL.md)) is the executable source of truth. This page is the human contract behind it.
 
 ```mermaid
 stateDiagram-v2

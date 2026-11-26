@@ -13,7 +13,7 @@ A sub-agent runs a task in its **own context** and returns only its conclusion. 
 
 ## The agents we use
 
-Three are in the [templates](https://github.com/alilibx/manzilo-workflow/tree/main/templates/.claude/agents). `Explore` and `general-purpose` are built into Claude Code.
+Three are in the [templates](https://github.com/alilibx/agentic-development-workflow/tree/main/templates/.claude/agents). `Explore` and `general-purpose` are built into Claude Code.
 
 | Agent | When | Returns |
 |---|---|---|

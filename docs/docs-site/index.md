@@ -22,7 +22,7 @@ docs/
 └─ superpowers/           # specs, plans, research (excluded from the build)
 ```
 
-The [starter](https://github.com/alilibx/manzilo-workflow/tree/main/templates/docs) has the config, theme, home page, engineering stubs, QA home and a test-case template.
+The [starter](https://github.com/alilibx/agentic-development-workflow/tree/main/templates/docs) has the config, theme, home page, engineering stubs, QA home and a test-case template.
 
 ```sh
 cd docs
