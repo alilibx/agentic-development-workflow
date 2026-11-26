@@ -1,12 +1,24 @@
 name: Main
 
 # Every push to main: check, deploy to staging, then let release-please open or
-# update the release PR. Merging that PR tags vX.Y.Z and publishes a GitHub
-# release, and the same run deploys the tag to production. Production only
-# gets code that reached staging first.
+# update the release PR. Merging that PR makes release-please tag vX.Y.Z and
+# create a DRAFT GitHub release; the same run deploys the tag to production,
+# smoke-tests it, and only then publishes the release. A published release
+# means "live and loading". Production only gets code that reached staging first.
 on:
   push:
     branches: [main]
+  # Break-glass only: staging itself is broken (an expired key, a provider
+  # outage) and production needs a fix that is already merged. An admin runs
+  # this on main with skip_staging, and says so in the incident note. Every
+  # other gate still runs, and release-please still cuts the tag, so the
+  # manifest and changelog stay in step.
+  workflow_dispatch:
+    inputs:
+      skip_staging:
+        description: "Break-glass: skip the staging deploy (admins only; log it in the incident note)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,16 +31,50 @@ jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
+  break-glass-guard:
+    if: inputs.skip_staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Only an admin, only on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Run break-glass from main, not $GITHUB_REF."
+            exit 1
+          fi
+          perm=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/$ACTOR/permission" --jq .permission)
+          if [ "$perm" != "admin" ]; then
+            echo "::error::$ACTOR has '$perm' permission; break-glass needs admin."
+            exit 1
+          fi
+          echo "::warning::Break-glass run by $ACTOR: staging is skipped."
+
   staging:
     needs: ci
+    if: ${{ !inputs.skip_staging }}
     uses: ./.github/workflows/deploy.yml
     with:
       environment: staging
       ref: ${{ github.sha }}
     secrets: inherit
 
-  release:
+  smoke-staging:
     needs: staging
+    uses: ./.github/workflows/smoke.yml
+    with:
+      environment: staging
+    secrets: inherit
+
+  release:
+    needs: [ci, staging, break-glass-guard]
+    # Normal path: staging succeeded. Break-glass: the guard passed instead.
+    if: >-
+      ${{ !cancelled() && needs.ci.result == 'success' &&
+      (needs.staging.result == 'success' ||
+       (inputs.skip_staging && needs.break-glass-guard.result == 'success')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -39,7 +85,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag_name }}
     steps:
       - id: release
-        uses: googleapis/release-please-action@v4  # pin to a commit SHA in your repo
+        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
@@ -48,9 +94,34 @@ jobs:
   # start other workflows.
   production:
     needs: release
-    if: needs.release.outputs.created == 'true'
+    if: ${{ !cancelled() && needs.release.outputs.created == 'true' }}
     uses: ./.github/workflows/deploy.yml
     with:
       environment: production
       ref: ${{ needs.release.outputs.tag }}
     secrets: inherit
+
+  smoke-production:
+    needs: [release, production]
+    if: ${{ !cancelled() && needs.release.outputs.created == 'true' }}
+    uses: ./.github/workflows/smoke.yml
+    with:
+      environment: production
+    secrets: inherit
+
+  # The release stays a draft until production is live and loads. If the deploy
+  # or the smoke check fails, the Releases page keeps showing the last version
+  # that is actually live, and a rollback that picks "the previous release"
+  # picks the right one.
+  publish-release:
+    needs: [release, production, smoke-production]
+    if: ${{ !cancelled() && needs.production.result == 'success' && needs.smoke-production.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.release.outputs.tag }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest

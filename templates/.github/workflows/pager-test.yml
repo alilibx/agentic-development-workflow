@@ -1,0 +1,33 @@
+name: Pager test
+
+# Run by hand to prove alerts reach a phone. A typo in the topic looks exactly
+# like a pager that works, until the first real outage. Run it after setting up
+# NOTIFY_TOPIC, after changing it, and whenever someone new joins the rotation.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      matrix:
+        priority: [low, default, high, urgent]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          sparse-checkout: .github/actions
+          persist-credentials: false
+      - name: Fail when the topic is missing
+        env:
+          TOPIC: ${{ secrets.NOTIFY_TOPIC }}
+        run: '[ -n "$TOPIC" ] || { echo "::error::NOTIFY_TOPIC is not set"; exit 1; }'
+      - uses: ./.github/actions/notify
+        with:
+          topic: ${{ secrets.NOTIFY_TOPIC }}
+          title: ${{ format('pager test {0}', matrix.priority) }}
+          message: "Test alert. If this arrived with the expected sound, the pager works."
+          priority: ${{ matrix.priority }}

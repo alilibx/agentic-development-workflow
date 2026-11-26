@@ -16,10 +16,23 @@ Never collapse these steps.
 
 ## How migrations run
 
-- **CI runs pending migrations after every deploy,** and blocks until they finish (see the `Migrations` step in [`deploy.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/deploy.yml)). When nothing is pending it does nothing, so a backfill lands the moment its schema does, with no manual step.
+There are two kinds of step, and they run at different times. Both are in [`deploy.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/deploy.yml).
+
+| Step | When | Why then |
+|---|---|---|
+| **Schema migrations** (SQL: Prisma, Drizzle, Alembic…) | **Before** the code deploy | The new code queries the new columns as soon as it starts. Schema migrations are expand-only, so the code that is live right now keeps working against them. |
+| **Data migrations and backfills** | **After** the code deploy, blocking | They fill the new shape. Idempotent, so a run with nothing pending does nothing, and a backfill lands the moment its code does, with no manual step. |
+
+Backends where the schema push *is* the deploy (Convex, for example) have no separate schema step: the deploy applies the schema, and backfills run after it.
+
+- **Back up before migrating production.** Take a dump (or check the point-in-time recovery window) right before the schema step, in the same job. A failed migration then costs a restore, not the data.
 - Migrations live in **one ordered list**. Append to it; never reorder it.
 - The run prints each migration's status and the number of rows processed, so the CI log is the proof.
-- For SQL databases, every schema change is a committed migration file from your ORM (Prisma, Drizzle, Alembic…). Apply them in the same CI step.
+- For SQL databases, every schema change is a committed migration file from your ORM. CI applies them; nobody runs them against staging or production by hand.
+
+## Reference data is seeded, not migrated
+
+Catalogues, plans, lookup tables and other platform data that every environment needs are written by an **idempotent seed** that runs after the migrations on every deploy (the `Seed reference data` step). Once seeded, it's a no-op; a new entry in the code reaches every environment on its next deploy. Test it: a second run changes nothing.
 
 ## Checklist
 
