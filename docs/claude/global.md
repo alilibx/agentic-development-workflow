@@ -86,14 +86,25 @@ Your other repos may have no bot at all. So the global rule is a fallback: **if 
 
 ### A global hook that defers to the repo
 
-The [starter `settings.json`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/settings.json) carries that fallback as a `PostToolUse` hook. Its first line hands control to the repo:
+The [starter `settings.json`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/settings.json) carries that fallback as a `PostToolUse` hook on `Bash`, which runs [`~/.claude/hooks/pr-review-policy.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/hooks/pr-review-policy.sh):
 
-```sh
-f="$CLAUDE_PROJECT_DIR/.claude/settings.json"
-if [ -f "$f" ] && grep -qE 'gh pr create|pr-lifecycle' "$f"; then exit 0; fi
+```json
+{
+  "type": "command",
+  "command": "\"$HOME\"/.claude/hooks/pr-review-policy.sh",
+  "statusMessage": "PR review policy check"
+}
 ```
 
-In a repo with its own [PR-lifecycle hook](/claude/hooks#the-pr-lifecycle-hook), the global hook exits and the repo's hook speaks. Everywhere else, it reminds the agent to review the new PR. The pattern works for any global default you want a repo to be able to override: check for the repo's version first, and step aside.
+After the agent runs `gh pr create`, the script decides in this order:
+
+1. **The repo has its own PR hook:** its `.claude/settings.json` mentions `gh pr create` or `pr-lifecycle`. The global hook exits, and the repo's [PR-lifecycle hook](/claude/hooks#the-pr-lifecycle-hook) speaks.
+2. **The repo has a CodeRabbit config** (`.coderabbit.yaml` or `.coderabbit.yml`). The bot reviews the PR, so the agent doesn't run a second local review. If the PR is docs-only, or no review appears, it says so and offers one.
+3. **Otherwise,** the agent runs `/code-review` on the PR, reports the findings, and fixes confirmed issues before handing it over.
+
+It detects the command with [`runs-gh-pr.sh`](/claude/hooks#match-the-command-not-the-text), an identical copy of the matcher the repo hook uses. So a commit message or heredoc that only mentions `gh pr create` doesn't trigger it, and `GH_TOKEN=x gh pr create` or `gh -R owner/repo pr create` does. [`pr-review-policy.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/hooks/pr-review-policy.test.sh) checks each decision above, and that the two copies of the matcher are still identical.
+
+The pattern works for any global default you want a repo to be able to override: check for the repo's version first, and step aside.
 
 ::: danger Never put a token in a hook command
 `settings.json` is read by tools, backed up, synced between machines, and pasted into issues and dotfiles repos. A token in a hook command (`curl -H 'Authorization: Bearer …'`) leaks with it. Read it from an environment variable or the OS keychain (`security find-generic-password -w` on macOS, `secret-tool lookup` on Linux).
@@ -110,7 +121,11 @@ The [`plain-voice` skill](https://github.com/alilibx/agentic-development-workflo
 ```sh
 cp -n  templates/global/CLAUDE.md      ~/.claude/CLAUDE.md
 cp -n  templates/global/settings.json  ~/.claude/settings.json
+mkdir -p ~/.claude/hooks ~/.claude/skills
+cp -n  templates/global/hooks/pr-review-policy.sh templates/global/hooks/runs-gh-pr.sh ~/.claude/hooks/
 cp -Rn templates/global/skills/plain-voice ~/.claude/skills/
 ```
+
+The hook needs `jq`. Keep `runs-gh-pr.sh` next to `pr-review-policy.sh`; when you update one copy of the matcher, update both.
 
 If you already have a `~/.claude/CLAUDE.md` or `settings.json`, merge by hand. Claude Code reads `~/.claude/settings.json` as one JSON object, so add the hook under your existing `hooks.PostToolUse` rather than appending a second file.

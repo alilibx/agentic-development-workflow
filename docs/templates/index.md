@@ -66,5 +66,8 @@ Not copied by `adopt.sh`. Copy these into `~/.claude/` by hand; see [Global and 
 | File | What it is |
 |---|---|
 | [`global/CLAUDE.md`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/CLAUDE.md) | A starter `~/.claude/CLAUDE.md`: precedence, branching, merge cleanup, worktrees, tracker, sub-agent safety |
-| [`global/settings.json`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/settings.json) | Attribution off, and a PR-review hook that defers to the repo's own |
+| [`global/settings.json`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/settings.json) | Attribution off, and the global PR-review hook |
+| [`global/hooks/pr-review-policy.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/hooks/pr-review-policy.sh) | After `gh pr create`: defers to the repo's own hook, else names who reviews the PR |
+| [`global/hooks/runs-gh-pr.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/hooks/runs-gh-pr.sh) | The same matcher as the repo hook; a test keeps the copies identical |
+| [`global/hooks/pr-review-policy.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/hooks/pr-review-policy.test.sh) | `bash templates/global/hooks/pr-review-policy.test.sh` |
 | [`global/skills/plain-voice/SKILL.md`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/global/skills/plain-voice/SKILL.md) | The writing voice for every reply |

@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/settings.json\"; if [ -f \"$f\" ] && grep -qE 'gh pr create|pr-lifecycle' \"$f\"; then exit 0; fi; command -v jq >/dev/null 2>&1 || exit 0; jq -r '.tool_input.command // \"\"' | grep -Eq '(^|[;&|(]|&&)[[:space:]]*gh[[:space:]]+pr[[:space:]]+create([[:space:]]|$)' || exit 0; jq -cn --arg ctx 'A pull request was just created, and this repo has no PR hook of its own. If CLAUDE.md, AGENTS.md or the engineering docs of this repo name a review bot or a review policy, follow them. Otherwise run a local review of this PR now (a code-review skill, or a reviewer sub-agent on the PR diff), report the findings, and fix confirmed issues on the PR branch before handing it over.' '{hookSpecificOutput: {hookEventName: \"PostToolUse\", additionalContext: $ctx}}'",
+            "command": "\"$HOME\"/.claude/hooks/pr-review-policy.sh",
             "statusMessage": "PR review policy check"
           }
         ]
