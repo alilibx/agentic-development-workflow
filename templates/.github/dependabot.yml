@@ -1,0 +1,13 @@
+# Keeps the workflows' actions current. App dependencies are bumped on purpose,
+# in their own PRs, not by a bot.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns: ["*"]

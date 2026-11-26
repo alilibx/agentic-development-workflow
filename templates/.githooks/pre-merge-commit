@@ -1,0 +1,5 @@
+#!/bin/sh
+# `git commit` runs pre-commit; `git merge` does not (githooks(5)). Without this
+# file, `git merge --no-ff <branch>` while on main would land a merge commit
+# that pre-commit never sees. Run the same check instead of copying it.
+exec "$(dirname "$0")/pre-commit"

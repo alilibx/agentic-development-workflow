@@ -1,0 +1,16 @@
+{
+  "name": "manzilo-workflow",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "postinstall": "git config core.hooksPath templates/.githooks || true"
+  },
+  "devDependencies": {
+    "mermaid": "^11.12.2",
+    "vitepress": "1.6.4",
+    "vitepress-plugin-mermaid": "2.0.17"
+  }
+}

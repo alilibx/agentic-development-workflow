@@ -1,0 +1,34 @@
+# CodeRabbit: https://docs.coderabbit.ai/getting-started/configure-coderabbit
+language: en
+reviews:
+  profile: assertive            # a strict reviewer, not a gentle one
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    # Decide this on purpose. Excluding markdown means a docs-only PR gets NO
+    # automated review, so it needs a human or local review instead.
+    - "!**/*.md"
+    - "!**/dist/**"
+    - "!**/node_modules/**"
+    - "!**/generated/**"
+  path_instructions:
+    # One block per package. Restate the rules from AGENTS.md that a reviewer
+    # should enforce there. Keep these in step with AGENTS.md.
+    - path: "<api>/**"
+      instructions: >
+        <Stack and version>. Flag any outbound side effect (email, SMS, webhook,
+        payment) that is not gated on APP_ENV=production or its own SEND_MODE.
+        Flag schema changes without a committed migration. Flag silent catches,
+        `as any` and `@ts-ignore`.
+    - path: "<app>/**"
+      instructions: >
+        <Stack and version>. User-facing strings go through the i18n files, in
+        every language, and layouts must work right to left. Flag hard-coded
+        colours or sizes that bypass the design tokens.
+chat:
+  auto_reply: true

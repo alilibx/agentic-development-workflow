@@ -1,0 +1,32 @@
+#!/bin/sh
+# Refuse every commit made while the current branch is the protected one.
+# See the manual: Workflow -> Branching and commits.
+#
+# Why a git hook and not an agent hook: git always knows which repo and branch
+# a commit lands in. A hook that parses shell text (cd, -C, GIT_DIR=, aliases,
+# a human in a terminal) to guess the branch can always be bypassed or fooled.
+#
+# Activation: `git config core.hooksPath .githooks`, run by the package
+# manager's postinstall/prepare script. Worktrees share the repo config, so one
+# activation covers all of them.
+#
+# Residual: a clean cherry-pick, revert or rebase creates commits without
+# running pre-commit or pre-merge-commit. Close that with server-side branch
+# protection when the plan allows it.
+
+PROTECTED_BRANCH="${PROTECTED_BRANCH:-main}"
+
+branch=$(git branch --show-current 2>/dev/null)
+
+# The root commit of a brand-new repo has no main to protect yet; allow it.
+git rev-parse --verify --quiet HEAD >/dev/null || exit 0
+
+# An empty name means detached HEAD (mid-rebase, mid-cherry-pick, or a
+# deliberate detached checkout). There is no long-lived branch to protect.
+if [ "$branch" = "$PROTECTED_BRANCH" ]; then
+  echo "Branching policy: no direct commits to $PROTECTED_BRANCH, ever, including doc fixes." >&2
+  echo "Create a branch first (feat/ fix/ chore/ refactor/ docs/ hotfix/), then commit and open a PR." >&2
+  exit 1
+fi
+
+exit 0
