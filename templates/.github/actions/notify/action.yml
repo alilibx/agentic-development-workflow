@@ -1,0 +1,76 @@
+# Push a deploy or smoke result to a phone.
+#
+# Why: post-merge workflows fail on runs nobody has open in a browser tab. A
+# staging deploy once stayed red for days before anyone noticed. This turns a
+# failure into a page, and a success into a quiet heartbeat, so silence is a
+# signal too.
+#
+# The example provider is ntfy (https://ntfy.sh). Swap the curl call for Slack,
+# Pushover or PagerDuty; keep the contract below.
+#
+# - The topic name is a credential. On public ntfy anyone who knows it can read
+#   and publish, so keep it unguessable and only in the NOTIFY_TOPIC secret.
+# - Fails open. With no topic (forks, before setup) or a failed send, the step
+#   logs and succeeds, so alert plumbing can never break a deploy.
+# - Headers get fixed strings only. Anything a user can influence (a ref, a
+#   commit message) goes in the body, never in a header.
+name: notify
+description: Send a push notification with a link to the run (failure alerts and success heartbeats)
+
+inputs:
+  topic:
+    description: The notification topic (pass secrets.NOTIFY_TOPIC; empty skips)
+    required: true
+  title:
+    description: Title, sent as an HTTP header. Fixed ASCII strings only.
+    required: true
+  message:
+    description: Body text. User-influenced text goes here, never in title or tags.
+    required: false
+    default: ""
+  priority:
+    # The ladder is the noise control: low for success heartbeats, high for
+    # staging failures, urgent for production failures (gets through Do Not
+    # Disturb). If success and failure sounded the same, the topic gets muted.
+    description: min, low, default, high or urgent
+    required: false
+    default: high
+  tags:
+    description: Comma-separated tags, sent as an HTTP header. Fixed strings only.
+    required: false
+    default: github
+  server:
+    description: The ntfy server
+    required: false
+    default: https://ntfy.sh
+
+runs:
+  using: composite
+  steps:
+    - name: Send notification
+      shell: bash
+      # Inputs go through env, so quotes or backticks in a message can't break
+      # out of the shell command.
+      env:
+        TOPIC: ${{ inputs.topic }}
+        TITLE: ${{ inputs.title }}
+        MESSAGE: ${{ inputs.message }}
+        PRIORITY: ${{ inputs.priority }}
+        TAGS: ${{ inputs.tags }}
+        SERVER: ${{ inputs.server }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        set -uo pipefail
+        if [ -z "$TOPIC" ]; then
+          echo "NOTIFY_TOPIC is not set; skipping the notification."
+          exit 0
+        fi
+        printf '%s\n%s\n' "$MESSAGE" "$RUN_URL" |
+          curl -fsS --max-time 15 \
+            -H "Title: $TITLE" \
+            -H "Priority: $PRIORITY" \
+            -H "Tags: $TAGS" \
+            -H "Click: $RUN_URL" \
+            --data-binary @- \
+            "$SERVER/$TOPIC" >/dev/null \
+          || echo "::warning::The notification failed to send (non-blocking)."

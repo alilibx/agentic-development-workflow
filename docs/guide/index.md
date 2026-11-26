@@ -1,6 +1,6 @@
 # What this is
 
-This is the process we use to build [Manzilo](https://manzilo.com), a property management platform. It is written so that another project can adopt it. It covers how work is picked, how code reaches `main`, how `main` reaches production, and how Claude Code fits into each step.
+This is the Agentic Development Workflow: a process for building software with a coding agent doing much of the work. It started as the process behind [Manzilo](https://manzilo.com), a property management platform, and was later carried into several other projects. It is written so that another project can adopt it. It covers how work is picked, how code reaches `main`, how `main` reaches production, and how Claude Code fits into each step.
 
 It was written for a team of two developers, one QA engineer, and a lot of agent work. Nothing in it breaks with ten developers.
 
@@ -38,8 +38,9 @@ Most teams already *say* "don't push to main" and "keep the docs current". Here,
 | Rule | Enforced by |
 |---|---|
 | No commits to `main` | A git `pre-commit` hook, switched on by `bun install` |
-| Every change has an issue, and the issue's status is true | The `/task` skill and a PR-lifecycle hook |
+| Every change has an issue, and the issue's status is true | The `/task` skill. A PR-lifecycle hook reminds the agent; it can't enforce. |
 | Code is reviewed | CI, a review bot, a human, and sub-agent reviews before the PR |
+| Invariants hold | Tests that fail when a rule breaks, including ratchets that can only shrink |
 | Only tested code reaches production | Staging deploys first; production takes only release tags |
 | Nothing reaches real people from staging | Side-effect gates that fail safe |
 | Docs match the code | Docs updated in the same PR, checked by `docs-auditor` |

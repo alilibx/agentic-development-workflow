@@ -1,5 +1,6 @@
 #!/bin/bash
-# Standalone harness for .githooks/pre-commit and .githooks/pre-merge-commit --
+# Standalone harness for .githooks/pre-commit, .githooks/pre-merge-commit and
+# .githooks/commit-msg --
 # no test framework, just scratch git repos and plain assertions. Run
 # directly: bash .githooks/pre-commit.test.sh
 #
@@ -12,6 +13,7 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 HOOK_SRC="$HERE/pre-commit"
 MERGE_HOOK_SRC="$HERE/pre-merge-commit"
+MSG_HOOK_SRC="$HERE/commit-msg"
 SCRATCH="$(mktemp -d)"
 trap 'rm -rf "$SCRATCH"' EXIT
 
@@ -148,6 +150,103 @@ main_count_after=$(cd "$REPO" && git log --oneline main | wc -l | tr -d ' ')
 check "merge commit landed on the feature branch (base + merged commit + merge commit)" "$ok"
 [ "$main_count_after" = "$main_count_before" ] && ok=1 || ok=0
 check "main is still untouched after the feature-branch merge" "$ok"
+echo
+
+# A fresh repo with the hooks activated before the first commit, as adopt.sh
+# leaves a brand-new project.
+new_repo() {
+  local dir="$1"
+  mkdir -p "$dir/.githooks"
+  cp "$HOOK_SRC" "$MERGE_HOOK_SRC" "$MSG_HOOK_SRC" "$dir/.githooks/"
+  chmod +x "$dir/.githooks/"*
+  (
+    cd "$dir" || exit 1
+    git init -q
+    git checkout -q -b main 2>/dev/null || git branch -m main
+    git config user.email "test@example.com"
+    git config user.name "Test"
+    git config core.hooksPath .githooks
+  )
+}
+
+echo "=== scenario 6: the root commit of an empty repo is allowed on main; the next is not ==="
+ROOT="$SCRATCH/root"
+new_repo "$ROOT"
+out=$(cd "$ROOT" && git add -A && git commit -m "chore: initial commit" 2>&1)
+rc=$?
+echo "--- exit code: $rc ---"
+[ "$rc" -eq 0 ] && ok=1 || ok=0
+check "root commit on main succeeds (nothing to protect yet)" "$ok"
+echo second > "$ROOT/second.txt"
+out=$(cd "$ROOT" && git add second.txt && git commit -m "should be rejected" 2>&1)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "no direct commits to main"; then ok=1; else ok=0; fi
+check "second commit on main is rejected" "$ok"
+echo
+
+echo "=== scenario 7: PROTECTED_BRANCH moves the guard ==="
+PB="$SCRATCH/protected"
+new_repo "$PB"
+(cd "$PB" && git add -A && git commit -q -m "chore: initial commit" && git branch -q -m trunk)
+echo a > "$PB/a.txt"
+out=$(cd "$PB" && git add a.txt && PROTECTED_BRANCH=trunk git commit -m "should be rejected on trunk" 2>&1)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "no direct commits to trunk"; then ok=1; else ok=0; fi
+check "PROTECTED_BRANCH=trunk refuses a commit on trunk" "$ok"
+(cd "$PB" && git switch -q -c main)
+out=$(cd "$PB" && PROTECTED_BRANCH=trunk git commit -m "allowed on main when trunk is protected" 2>&1)
+rc=$?
+[ "$rc" -eq 0 ] && ok=1 || ok=0
+check "PROTECTED_BRANCH=trunk allows a commit on a branch named main" "$ok"
+echo
+
+echo "=== scenario 8: commit-msg refuses AI attribution ==="
+CM="$SCRATCH/commitmsg"
+new_repo "$CM"
+(cd "$CM" && git add -A && git commit -q -m "chore: initial commit" && git switch -q -c feature)
+attempt() {
+  echo "$RANDOM" >> "$CM/f.txt"
+  (cd "$CM" && git add f.txt && git commit -q -F - 2>&1)
+}
+out=$(printf 'feat: x\n\nCo-authored-by: Claude <noreply@anthropic.com>\n' | attempt)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "Attribution policy"; then ok=1; else ok=0; fi
+check "Co-authored-by Claude trailer is refused" "$ok"
+out=$(printf 'feat: x\n\nco-authored-by: Some Bot <bot@anthropic.com>\n' | attempt)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "Attribution policy"; then ok=1; else ok=0; fi
+check "lower-case co-authored-by naming anthropic is refused" "$ok"
+out=$(printf 'feat: x\n\nClaude-Session: https://example.com/s/1\n' | attempt)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "Attribution policy"; then ok=1; else ok=0; fi
+check "Claude-Session trailer is refused" "$ok"
+out=$(printf 'feat: x\n\nGenerated with [Claude Code](https://claude.com/claude-code)\n' | attempt)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "Attribution policy"; then ok=1; else ok=0; fi
+check "'Generated with Claude Code' line is refused" "$ok"
+out=$(printf 'feat: x\n\nCo-authored-by: Jane Doe <jane@example.com>\n' | attempt)
+[ $? -eq 0 ] && ok=1 || ok=0
+check "a human co-author is allowed" "$ok"
+out=$(printf 'docs: explain why we turned off Claude attribution\n' | attempt)
+[ $? -eq 0 ] && ok=1 || ok=0
+check "a subject that only mentions Claude is allowed" "$ok"
+out=$(printf 'fix: x\n\nRemove the Generated with Claude Code footer from PR bodies\n' | attempt)
+[ $? -eq 0 ] && ok=1 || ok=0
+check "a body line that mentions the footer in prose is allowed" "$ok"
+out=$(printf 'feat: x\n\n\360\237\244\226 Generated with [Claude Code](https://claude.com/claude-code)\n' | attempt)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "Attribution policy"; then ok=1; else ok=0; fi
+check "the real footer line, with its emoji, is refused" "$ok"
+# git commit -v: the diff below the scissors line is not part of the message,
+# even when the change itself adds the footer to a file.
+printf '#!/bin/sh\nprintf "docs: add the PR body template\\n" | cat - "$1" > "$1.new" && mv "$1.new" "$1"\n' > "$SCRATCH/editor.sh"
+chmod +x "$SCRATCH/editor.sh"
+printf '\360\237\244\226 Generated with [Claude Code](https://claude.com/claude-code)\n' >> "$CM/pr-body.md"
+out=$(cd "$CM" && git add pr-body.md && GIT_EDITOR="$SCRATCH/editor.sh" git commit -q -v 2>&1)
+rc=$?
+subject=$(cd "$CM" && git log -1 --format=%s)
+[ "$rc" -eq 0 ] && [ "$subject" = "docs: add the PR body template" ] && ok=1 || ok=0
+check "git commit -v whose diff adds the footer is allowed (scissors honoured)" "$ok"
 echo
 
 echo "=== summary: $pass passed, $fail failed ==="

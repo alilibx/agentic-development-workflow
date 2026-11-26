@@ -1,10 +1,11 @@
 # Claude Code
 
-Most of the code in our projects is written by [Claude Code](https://docs.claude.com/en/docs/claude-code), guided by a human who decides and reviews. The workflow only holds if the agent follows it as reliably as a person would. Five pieces make that happen:
+Most of the code in our projects is written by [Claude Code](https://docs.claude.com/en/docs/claude-code), guided by a human who decides and reviews. The workflow only holds if the agent follows it as reliably as a person would. Six pieces make that happen:
 
 | Piece | Where it lives | What it does |
 |---|---|---|
 | [`CLAUDE.md` / `AGENTS.md`](/claude/claude-md) | Repo root, plus nested files per package | The rules, loaded into every session |
+| [Global instructions](/claude/global) | `~/.claude/` | Your fallbacks for every repo; the repo wins |
 | [Skills](/claude/skills) | `.claude/skills/` and installed globally | Step-by-step procedures (`/task`) and stack knowledge (your backend, UI kit, design system) |
 | [Sub-agents](/claude/agents) | `.claude/agents/` | Research, review and docs audits in their own context |
 | [Hooks](/claude/hooks) | `.claude/settings.json` | Reminders and checks around actions the agent takes |

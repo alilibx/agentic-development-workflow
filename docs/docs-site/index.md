@@ -15,14 +15,15 @@ docs/
 │  ├─ index.md            # lifecycle diagram + guiding principles
 │  ├─ task-flow.md  branching.md  code-review.md
 │  ├─ environments.md  ci-cd.md  release-process.md  migrations.md
+│  ├─ qa-process.md
 ├─ api/<module>.md        # per-module API reference: functions, args, returns
 ├─ flows/                 # business flows as Mermaid diagrams
 ├─ modules/               # module overviews: data, architecture
-├─ qa/                    # QA home, roadmap, test-cases/<module>.md
-└─ superpowers/           # specs, plans, research (excluded from the build)
+├─ qa/                    # QA home, roadmap, test-cases/<module>.md, rounds/
+└─ superpowers/           # specs, plans, research, runbooks (excluded from the build)
 ```
 
-The [starter](https://github.com/alilibx/agentic-development-workflow/tree/main/templates/docs) has the config, theme, home page, engineering stubs, QA home and a test-case template.
+The [starter](https://github.com/alilibx/agentic-development-workflow/tree/main/templates/docs) has the config, theme, home page, engineering stubs, the QA home and roadmap, and templates for test cases and QA-round answers.
 
 ```sh
 cd docs
@@ -45,6 +46,7 @@ bun run build    # what CI runs
 - **The workflow file is the source of truth for CI.** Its comments give the reason for each step; the page describes what it does and links to the file.
 - **Give headings that other pages link to an explicit anchor**, `## Rollback {#rollback}`, so the link survives a heading rename.
 - **Every page is in the sidebar.** A page missing from the sidebar effectively doesn't exist.
+- **A moved page leaves a redirect stub.** Bug reports, tracker issues and chat link to pages. Keep the old path as a one-paragraph page that says where the content went and links there.
 - **No secrets, real people's details, or client data,** including in examples and screenshots. Use obvious placeholders (`+971500000001`).
 
 ## Keeping it true
@@ -64,16 +66,20 @@ on:
   push: { branches: [main], paths: ['docs/**'] }
   pull_request: { paths: ['docs/**'] }
 permissions: { contents: read, pages: write, id-token: write }
+# Cancel superseded PR builds, never a deploy in flight.
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   build:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: docs } }
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
       - run: bun install --frozen-lockfile
       - run: bun run build
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         if: github.event_name != 'pull_request'
         with: { path: docs/.vitepress/dist }
   deploy:
@@ -82,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: { name: github-pages }
     steps:
-      - uses: actions/deploy-pages@v4
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
 ```
 ```json [Vercel (docs/vercel.json)]
 {

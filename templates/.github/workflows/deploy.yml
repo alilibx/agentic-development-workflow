@@ -2,6 +2,18 @@ name: Deploy
 
 # Reusable deploy, also runnable by hand for a rollback: run it for production
 # with the previous release tag.
+#
+# Secrets and variables are per tier, named with a suffix, so the two tiers can
+# never read each other's values:
+#   secrets  DEPLOY_TOKEN_STAGING, DEPLOY_TOKEN_PRODUCTION, NOTIFY_TOPIC
+#   vars     HEALTH_URL_STAGING,   HEALTH_URL_PRODUCTION
+# They work as plain repository secrets on any GitHub plan, and stay the
+# default source. The deploy job also names its GitHub environment, always:
+# whatever protection that environment has (deployment branch/tag rules,
+# required reviewers on production) applies, and where your plan can't
+# configure environments, GitHub creates an empty one and it gates nothing.
+# Keep the suffixed names even after moving a secret into its environment.
+# See the manual: Delivery -> CI/CD -> "Secrets per tier".
 on:
   workflow_call:
     inputs:
@@ -23,15 +35,20 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Always on. Commenting it out silently drops every rule configured on
+    # the environment, including a required reviewer on production.
     environment: ${{ inputs.environment }}
-    # Never cancel a deploy in flight: a cancelled deploy sends no failure
-    # alert and leaves the environment stale.
+    # Never cancel a deploy in flight: a cancelled deploy leaves the
+    # environment stale, and nobody notices for days.
     concurrency:
       group: deploy-${{ inputs.environment }}
       cancel-in-progress: false
     env:
       ENVIRONMENT: ${{ inputs.environment }}
       REF: ${{ inputs.ref }}
+      # The suffix comes from two literal strings, so it can't be empty and
+      # can't fall back to the other tier's value.
+      TIER: ${{ inputs.environment == 'production' && 'PRODUCTION' || 'STAGING' }}
     steps:
       - name: Production deploys release tags only
         if: inputs.environment == 'production'
@@ -40,33 +57,91 @@ jobs:
             echo "::error::production deploys a release tag such as v1.2.3, got '$REF'"
             exit 1
           fi
-      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           # Fully qualified for production, so a branch named like a tag can't stand in.
           ref: ${{ inputs.environment == 'production' && format('refs/tags/{0}', inputs.ref) || inputs.ref }}
           persist-credentials: false
 
+      # A tag is only a name. Refuse one that release-please didn't cut from
+      # main: the tagged commit must be on main, and its manifest must already
+      # say this version (release-please writes it in the release PR).
+      - name: Production tag is a release commit on main
+        if: inputs.environment == 'production'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          # "ahead" or "identical": the default branch contains this commit.
+          status=$(gh api "repos/$GITHUB_REPOSITORY/compare/$sha...$DEFAULT_BRANCH" --jq .status)
+          if [ "$status" != "identical" ] && [ "$status" != "ahead" ]; then
+            echo "::error::$REF ($sha) is not on the default branch (compare status: $status)."
+            exit 1
+          fi
+          manifest=$(jq -r '."."' .release-please-manifest.json)   # <your package path, if not ".">
+          if [ "v$manifest" != "$REF" ]; then
+            echo "::error::$REF points at a commit whose .release-please-manifest.json says v$manifest. Only tags cut by release-please deploy."
+            exit 1
+          fi
+
+      # Backup, then schema migrations, run BEFORE the new code starts (SQL:
+      # Prisma, Drizzle, Alembic...). Migrations are expand-only, so the code
+      # that is live right now keeps working against the new schema.
+      # Convex and other "the schema push is the deploy" backends skip this.
+      #
+      # - name: Back up the database
+      #   if: inputs.environment == 'production'
+      #   timeout-minutes: 15
+      #   run: ./deploy/backup.sh "$ENVIRONMENT"     # <your dump command>
+      #   env:
+      #     DEPLOY_TOKEN: ${{ secrets[format('DEPLOY_TOKEN_{0}', env.TIER)] }}
+      #
+      # - name: Schema migrations (SQL: run before Deploy)
+      #   timeout-minutes: 15
+      #   run: ./deploy/migrate-schema.sh "$ENVIRONMENT"   # <e.g. prisma migrate deploy>
+      #   env:
+      #     DEPLOY_TOKEN: ${{ secrets[format('DEPLOY_TOKEN_{0}', env.TIER)] }}
+
       # Pass secrets only to the steps that need them, never to dependency
       # install scripts. Give every long step its own timeout: a job-level
-      # timeout cancels the job, and `if: failure()` alerts may never run.
+      # timeout cancels the job instead of failing it.
       - name: Deploy
         timeout-minutes: 15
-        run: ./deploy/deploy.sh "$ENVIRONMENT"   # <your deploy command>
+        run: |
+          : "${DEPLOY_TOKEN:?secret DEPLOY_TOKEN_$TIER is not set}"
+          ./deploy/deploy.sh "$ENVIRONMENT"   # <your deploy command>
         env:
-          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          DEPLOY_TOKEN: ${{ secrets[format('DEPLOY_TOKEN_{0}', env.TIER)] }}
 
-      - name: Migrations
+      # After the deploy, blocking and idempotent: a no-op when nothing is
+      # pending, so a backfill lands the moment its code does.
+      - name: Data migrations / backfills
         timeout-minutes: 30
         run: ./deploy/migrate.sh "$ENVIRONMENT"  # <idempotent; a no-op when nothing is pending>
+        env:
+          DEPLOY_TOKEN: ${{ secrets[format('DEPLOY_TOKEN_{0}', env.TIER)] }}
+
+      # Reference data (catalogues, plans, lookup tables) is seeded, not
+      # migrated. The seed is idempotent, so it is a no-op once seeded and
+      # picks up new entries on the next deploy.
+      - name: Seed reference data
+        timeout-minutes: 10
+        run: ./deploy/seed.sh "$ENVIRONMENT"     # <idempotent seed; delete if you have none>
+        env:
+          DEPLOY_TOKEN: ${{ secrets[format('DEPLOY_TOKEN_{0}', env.TIER)] }}
 
       # A green deploy step has shipped a blank page before. Prove the live
       # service runs this commit and answers.
       - name: Verify the live revision
         timeout-minutes: 5
         env:
-          HEALTH_URL: ${{ vars.HEALTH_URL }}
+          HEALTH_URL: ${{ vars[format('HEALTH_URL_{0}', env.TIER)] }}
         run: |
+          : "${HEALTH_URL:?variable HEALTH_URL_$TIER is not set}"
           EXPECTED=$(git rev-parse HEAD)
+          got=""
           for i in $(seq 1 30); do
             got=$(curl -fsS "$HEALTH_URL" | jq -r '.revision // empty' || true)
             [ "$got" = "$EXPECTED" ] && exit 0
@@ -74,3 +149,35 @@ jobs:
           done
           echo "::error::$HEALTH_URL reports revision '$got', expected $EXPECTED"
           exit 1
+
+  # Several deployables? Deploy the backend first, so the schema and functions
+  # exist before the new frontend calls them, and roll back in reverse order.
+  #
+  # deploy-frontend:
+  #   needs: deploy
+  #   runs-on: ubuntu-latest
+  #   ...same shape: checkout, deploy, verify...
+
+  # Its own job, so it runs on success, failure AND cancellation (a cancelled
+  # deploy otherwise passes silently). It checks out the notify action at the
+  # workflow's own commit, not the deployed ref, so a rollback to an old tag
+  # still alerts.
+  alert:
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          sparse-checkout: .github/actions
+          persist-credentials: false
+      - uses: ./.github/actions/notify
+        with:
+          topic: ${{ secrets.NOTIFY_TOPIC }}
+          # Headers take fixed strings only; both values here come from closed sets.
+          title: ${{ format('{0} deploy {1}', inputs.environment, needs.deploy.result) }}
+          message: ${{ format('{0} -> {1}', inputs.ref, inputs.environment) }}
+          # Success is a low heartbeat on staging; production failures get through Do Not Disturb.
+          priority: ${{ needs.deploy.result == 'success' && (inputs.environment == 'production' && 'default' || 'low') || (inputs.environment == 'production' && 'urgent' || 'high') }}

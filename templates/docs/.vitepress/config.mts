@@ -5,8 +5,8 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 export default withMermaid(defineConfig({
   title: '<Project> Docs',
   description: '<One line: what the product is>',
-  // srcDir defaults to this folder (docs/). superpowers/ holds specs and plans;
-  // they are read in the repo, not published.
+  // srcDir defaults to this folder (docs/). superpowers/ holds specs, plans and
+  // runbooks; they are read in the repo, not published.
   srcExclude: ['superpowers/**', 'README.md'],
   lastUpdated: true,
   cleanUrls: true,
@@ -37,13 +37,16 @@ export default withMermaid(defineConfig({
           { text: 'CI/CD', link: '/engineering/ci-cd' },
           { text: 'Releases', link: '/engineering/release-process' },
           { text: 'Migrations', link: '/engineering/migrations' },
+          { text: 'QA process', link: '/engineering/qa-process' },
         ],
       },
       {
         text: 'QA',
         items: [
           { text: 'QA home', link: '/qa/' },
+          { text: 'Testing roadmap', link: '/qa/roadmap' },
           { text: 'Test case template', link: '/qa/test-cases/_template' },
+          { text: 'QA round template', link: '/qa/rounds/_template' },
         ],
       },
       // Add: { text: 'API reference', items: [...] }, { text: 'Flows', items: [...] }

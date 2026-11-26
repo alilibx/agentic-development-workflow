@@ -1,9 +1,9 @@
 ---
 layout: home
 hero:
-  name: Manzilo Workflow
+  name: Agentic Development Workflow
   text: From tracker issue to production, with Claude Code
-  tagline: The engineering process behind Manzilo, written so any project can adopt it in an afternoon.
+  tagline: A tested engineering process for teams that build with coding agents, written so any project can adopt it in an afternoon.
   actions:
     - theme: brand
       text: Adopt it

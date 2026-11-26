@@ -90,3 +90,13 @@ The cascade is only as truthful as the board. The board owner keeps these groome
 ## People who don't use the tracker
 
 Some people on the team, such as QA or commercial, may not use Linear, so an @mention there never reaches them. Agree where their work lives (a shared workbook, for example), and add a line to `AGENTS.md` saying who updates it after fixes ship.
+
+## Public projects
+
+An open-source project often keeps its plan in the repo instead of a private tracker. The loop still holds, with a public roadmap in place of the board:
+
+- **Every open roadmap item has an issue and a milestone.** The issue is where discussion happens; the roadmap links it.
+- **Tick the roadmap item in the PR that finishes it,** not afterwards, so the roadmap is true the moment the PR merges.
+- **Close issues from the PR:** `Closes #123` in the description.
+
+Write the choice into `AGENTS.md`, so a [global rule](/claude/global) that says "everything goes through Linear" knows this repo has opted out.
