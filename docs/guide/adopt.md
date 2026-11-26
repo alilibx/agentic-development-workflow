@@ -18,6 +18,8 @@ It refuses, and tells you why, when enforcement would silently be off:
 - **The path isn't the repository root.** `core.hooksPath` is resolved from the root, so hooks copied into a subfolder never run. Run it on the root.
 - **`core.hooksPath` already points somewhere else** (husky, lefthook). Overwriting it would switch your existing hooks off. Call `.githooks/pre-commit` from your hook manager's pre-commit, and `.githooks/pre-merge-commit` from its pre-merge-commit, then re-run with `--keep-hooks-path`.
 
+Only the repo's own (`--local`) `core.hooksPath` counts as another hook manager. A value from your global or system git config doesn't stop the script: it sets the repo's local value, which overrides it in this repo, and prints a note, because those global hooks stop running here.
+
 It also warns when `.gitignore` would hide a copied file. A common pattern, `.claude/*`, hides the hook script and the agents while the committed `settings.json` still points at the hook, so every teammate gets a hook error. The warning prints the `!` lines to add; see [Hooks](/claude/hooks#settings-files).
 
 If you already had a `CLAUDE.md`, the script kept it. Add `@AGENTS.md` as its first line, so Claude loads the rules.

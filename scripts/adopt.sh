@@ -42,7 +42,10 @@ if [ "$dest" != "$top" ]; then
 fi
 
 # Don't silently switch off another hook manager (husky, lefthook, ...).
-current_hooks_path="$(git -C "$dest" config --get core.hooksPath || true)"
+# Only this repo's own setting counts: a global or system core.hooksPath is
+# not this project's hook manager, and the local value we set overrides it.
+current_hooks_path="$(git -C "$dest" config --local --get core.hooksPath || true)"
+inherited_hooks_path="$(git -C "$dest" config --get core.hooksPath || true)"
 if [ -n "$current_hooks_path" ] && [ "$current_hooks_path" != ".githooks" ] && [ "$keep_hooks_path" -eq 0 ]; then
   cat >&2 <<EOT
 error: core.hooksPath is already set to "$current_hooks_path".
@@ -78,6 +81,12 @@ else
 fi
 
 echo "Copied ${#copied[@]} files into $dest and $hooks_msg."
+if [ -z "$current_hooks_path" ] && [ -n "$inherited_hooks_path" ] && [ "$inherited_hooks_path" != ".githooks" ]; then
+  echo
+  echo "note: your global or system git config sets core.hooksPath to \"$inherited_hooks_path\"."
+  echo "This repo's local .githooks setting overrides it here, so those hooks no longer run in this repo."
+  echo "If you need them too, call them from the hooks in .githooks/."
+fi
 if [ "${#skipped[@]}" -gt 0 ]; then
   echo
   echo "Already there, left untouched (merge these by hand):"
