@@ -120,7 +120,7 @@ function scan(s,    n, i, c, top, joined, strip, j, w) {
       if (substr(s, j, 1) == "-") { strip = 1; j++ }
       while (substr(s, j, 1) == " " || substr(s, j, 1) == "\t") j++
       w = heredoc_word(s, j)
-      if (w != "") { nq++; qdelim[nq] = w; qstrip[nq] = strip }
+      if (wend > j) { nq++; qdelim[nq] = w; qstrip[nq] = strip }   # a word was read, even an empty one like ''
       emit("<<_"); i = wend; continue
     }
     emit(c); i++
