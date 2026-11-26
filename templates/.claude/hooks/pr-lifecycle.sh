@@ -55,10 +55,10 @@ create_msg="A pull request was just created. Policy: (1) Do NOT run a local revi
 merge_msg="A PR merge command just ran. If it did not merge (non-zero exit, not mergeable, or only queued for auto-merge), ignore this. If it merged, run /task done for the linked issue ($ISSUE_KEY-<id> in the branch name): post the completion comment, move the issue to Done, propose follow-ups to the tracker owner without creating them, then run /task to offer the next pick. See .claude/skills/task/SKILL.md."
 
 # One command can do both (`gh pr create --fill && gh pr merge --squash`).
-# Then the create steps (wait for review, move to In Review) only apply if the
-# merge did not happen.
+# The two commands may target different PRs, so each policy applies to its own
+# PR; the create steps are skipped only when the created PR is the one merged.
 if [ "$created" = 1 ] && [ "$merged" = 1 ]; then
-  emit "This command ran both gh pr create and gh pr merge. First check whether the PR actually merged (gh pr view <n> --json state,mergeCommit). If it did not merge, the create policy applies: $create_msg If it merged, skip the create policy (no wait for review, no move to In Review) and follow the merge policy: $merge_msg"
+  emit "This command ran both gh pr create and gh pr merge. Identify both PRs first: the created PR is the URL that gh pr create printed, and the merged PR is the number or branch that gh pr merge was given (none means the current branch PR, which is usually the one just created). Then apply each policy to its own PR. Created PR: unless gh pr view <created PR> --json state,mergeCommit shows it merged, the create policy applies to it: $create_msg Merged PR: if gh pr view <merged PR> --json state,mergeCommit shows it merged, the merge policy applies to it: $merge_msg If both are the same PR and it merged, skip the create policy for it (no wait for review, no move to In Review)."
 elif [ "$created" = 1 ]; then
   emit "$create_msg"
 elif [ "$merged" = 1 ]; then
