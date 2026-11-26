@@ -12,8 +12,7 @@ flowchart TB
     G[docs build]
   end
   subgraph MAIN["Push to main: main.yml"]
-    H[ci.yml again] --> I["deploy.yml → staging"] --> J["release-please:<br/>open or update release PR"]
-    I --> SS["smoke.yml → staging"]
+    H[ci.yml again] --> I["deploy.yml → staging"] --> SS["smoke.yml → staging"] --> J["release-please:<br/>open or update release PR"]
     J -->|"release PR merged"| K["tag vX.Y.Z +<br/>draft GitHub release"] --> L["deploy.yml → production"]
     L --> SP["smoke.yml → production"] --> PUB["publish the release"]
   end
@@ -23,12 +22,12 @@ flowchart TB
 | Workflow | Trigger | What it does |
 |---|---|---|
 | [`ci.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/ci.yml) | Every PR, and called by `main.yml` | The checks from `AGENTS.md`, one job per package; generated code is fresh; docs build |
-| [`main.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/main.yml) | Push to `main`; break-glass dispatch | CI → staging → release-please → production → smoke → publish the release |
+| [`main.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/main.yml) | Push to `main`; break-glass dispatch | CI → staging → smoke → release-please → production → smoke → publish the release |
 | [`deploy.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/deploy.yml) | Called by `main.yml`, or run by hand for a rollback | Deploy, migrate, seed, verify the live revision, alert. Production accepts only release tags on `main`. |
 | [`smoke.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/smoke.yml) | After each deploy, every morning, and by hand | Loads the main pages in a headless browser |
 | [`pager-test.yml`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/workflows/pager-test.yml) | By hand | Sends one alert at each priority, to prove the pager works |
 
-Release-please runs **after** staging succeeds, so production only gets code that reached staging first. The GitHub release it creates stays a **draft** until production is deployed and its smoke test passes. A published release means "live and loading".
+Release-please runs **after** staging deploys and its smoke test passes, so production only gets code that reached staging and loaded there. The GitHub release it creates stays a **draft** until production is deployed and its smoke test passes. A published release means "live and loading".
 
 ::: warning Leave out the deploy workflows until you deploy
 `main.yml`, `deploy.yml` and `smoke.yml` call placeholder scripts (`./deploy/deploy.sh`, `bun run smoke`). Copied as they are, the first merge to `main` goes red and release-please never runs. Either fill them in in the adopting PR, or keep only `ci.yml` until the project deploys.
@@ -80,7 +79,7 @@ A green deploy step has shipped a blank page twice: once because the bundle held
 
 1. **The service reports its revision.** The health endpoint returns the commit it runs: `{"status":"ok","revision":"<sha>"}`. The deploy step writes the SHA in.
 2. **The deploy waits for it.** The last step polls the tier's own health URL until it reports the commit just deployed, and fails otherwise.
-3. **A browser smoke test** (`smoke.yml`) loads the main pages in headless Chromium after each staging and production deploy, and every morning, and fails on a blank page or console errors. In `main.yml` it runs with `if: !cancelled()`, so it still runs when a deploy leg failed, and you learn whether the site loads.
+3. **A browser smoke test** (`smoke.yml`) loads the main pages in headless Chromium after each staging and production deploy, and every morning, and fails on a blank page or console errors. In `main.yml` it runs with `if: !cancelled()`, so it still runs when a deploy leg failed, and you learn whether the site loads. A failed or skipped staging smoke stops the release; only [break-glass](/delivery/releases#break-glass), which skips staging, skips it too.
 
 ## Several deployables {#several-deployables}
 

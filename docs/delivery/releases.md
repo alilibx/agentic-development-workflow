@@ -65,7 +65,7 @@ If `main` holds work that must not ship yet, **revert it on `main` first** (a no
 
 **When staging itself is broken** (an expired key, a provider outage) and production needs a fix that is already merged:
 
-1. Merge the release PR as usual. Its `main.yml` run stops at the failed staging deploy, so no tag is cut.
+1. Merge the release PR as usual. Its `main.yml` run stops at the failed staging deploy or staging smoke test, so no tag is cut.
 2. An admin runs **Main** by hand on `main` with `skip_staging` ticked. A guard job refuses anyone who isn't an admin, and anything not on `main`. It checks whoever triggered this run (`github.triggering_actor`), so re-running an admin's run doesn't lend a non-admin the admin's rights. CI still runs; release-please cuts the tag and keeps the manifest in step; production deploys, is smoke-tested, and the release is published.
 3. The incident note says staging was skipped and why. Fix staging next.
 

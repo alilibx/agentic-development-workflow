@@ -1,7 +1,7 @@
 name: Main
 
-# Every push to main: check, deploy to staging, then let release-please open or
-# update the release PR. Merging that PR makes release-please tag vX.Y.Z and
+# Every push to main: check, deploy to staging, smoke-test staging, then let
+# release-please open or update the release PR. Merging that PR makes release-please tag vX.Y.Z and
 # create a DRAFT GitHub release; the same run deploys the tag to production,
 # smoke-tests it, and only then publishes the release. A published release
 # means "live and loading". Production only gets code that reached staging first.
@@ -65,19 +65,25 @@ jobs:
       ref: ${{ github.sha }}
     secrets: inherit
 
+  # Runs when the staging deploy was attempted, even if it failed, so you
+  # learn whether staging still loads. Skipped with staging (break-glass, or
+  # CI failed).
   smoke-staging:
     needs: staging
+    if: ${{ !cancelled() && needs.staging.result != 'skipped' }}
     uses: ./.github/workflows/smoke.yml
     with:
       environment: staging
     secrets: inherit
 
   release:
-    needs: [ci, staging, break-glass-guard]
-    # Normal path: staging succeeded. Break-glass: the guard passed instead.
+    needs: [ci, staging, smoke-staging, break-glass-guard]
+    # Normal path: staging deployed AND its smoke test passed; a blank staging
+    # page stops the release. Break-glass: both are skipped, and the guard
+    # passed instead.
     if: >-
       ${{ !cancelled() && needs.ci.result == 'success' &&
-      (needs.staging.result == 'success' ||
+      ((needs.staging.result == 'success' && needs.smoke-staging.result == 'success') ||
        (inputs.skip_staging && needs.break-glass-guard.result == 'success')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
