@@ -19,7 +19,7 @@ input=$(cat)
 
 if ! command -v jq >/dev/null 2>&1; then
   case "$input" in
-    *"gh pr"*|*"gh -R"*|*"gh --repo"*)
+    *gh*pr*)
       printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"The PR-lifecycle hook (.claude/hooks/pr-lifecycle.sh) needs jq, which is not installed, so its PR reminders are off. Tell the developer to install jq."}}'
       ;;
   esac
@@ -31,7 +31,7 @@ command_text=$(printf '%s' "$input" | jq -r '.tool_input.command // ""')
 matcher="$(dirname "$0")/runs-gh-pr.sh"
 if [ ! -f "$matcher" ]; then
   case "$command_text" in
-    *"gh pr"*|*"gh -R"*|*"gh --repo"*)
+    *gh*pr*)
       jq -cn --arg ctx "The PR-lifecycle hook (.claude/hooks/pr-lifecycle.sh) can't find $matcher, so its PR reminders are off. Tell the developer to restore it from the workflow templates (and check .gitignore doesn't hide .claude/hooks/)." \
         '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $ctx}}'
       ;;

@@ -21,7 +21,7 @@ if [ -f "$f" ] && grep -qE 'gh pr create|pr-lifecycle' "$f"; then exit 0; fi
 
 if ! command -v jq >/dev/null 2>&1; then
   case "$input" in
-    *"gh pr"*|*"gh -R"*|*"gh --repo"*)
+    *gh*pr*)
       printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"The global PR-review hook (~/.claude/hooks/pr-review-policy.sh) needs jq, which is not installed, so its PR reminder is off. Tell the developer to install jq."}}'
       ;;
   esac
@@ -33,7 +33,7 @@ command_text=$(printf '%s' "$input" | jq -r '.tool_input.command // ""')
 matcher="$(dirname "$0")/runs-gh-pr.sh"
 if [ ! -f "$matcher" ]; then
   case "$command_text" in
-    *"gh pr"*|*"gh -R"*|*"gh --repo"*)
+    *gh*pr*)
       jq -cn --arg ctx "The global PR-review hook (~/.claude/hooks/pr-review-policy.sh) can't find $matcher, so its PR reminder is off. Tell the developer to copy it from the workflow templates (templates/global/hooks/)." \
         '{hookSpecificOutput: {hookEventName: "PostToolUse", additionalContext: $ctx}}'
       ;;

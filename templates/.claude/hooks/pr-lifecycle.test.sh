@@ -80,6 +80,9 @@ run_cases() {
   expect create "arithmetic shift is not a heredoc" "x=\$((1<<y))${nl}gh pr create --fill"
   expect create "(( )) shift is not a heredoc" "(( x = 1<<y ))${nl}gh pr create --fill"
   expect create "delimiter must match the whole line" "cat <<EOF${nl}EOF2${nl} EOF${nl}EOF${nl}gh pr create --fill"
+  expect none   "empty quoted heredoc delimiter, body mentions create" "cat <<''${nl}gh pr create --fill${nl}printf done"
+  expect create "real command after an empty-delimiter heredoc ends" "cat <<''${nl}x${nl}${nl}gh pr create --fill"
+  expect create "two spaces between gh and pr" 'gh  pr create --fill'
   expect create "two heredocs on one line" "cat <<A <<B${nl}a${nl}A${nl}gh pr merge${nl}B${nl}gh pr create --fill"
   expect none   "comment that mentions it" '# then gh pr create'
   expect create "escaped quote doesn't open a string" "echo \\\"${nl}gh pr create --fill"
