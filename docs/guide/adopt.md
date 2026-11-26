@@ -5,11 +5,11 @@ This takes about an afternoon. Each step links to the page that explains it.
 ## 1. Copy the templates
 
 ```sh
-git clone https://github.com/alilibx/manzilo-workflow
-manzilo-workflow/scripts/adopt.sh /path/to/your-project
+git clone https://github.com/alilibx/agentic-development-workflow
+agentic-development-workflow/scripts/adopt.sh /path/to/your-project
 ```
 
-The script copies everything under [`templates/`](https://github.com/alilibx/manzilo-workflow/tree/main/templates) into your project and sets `core.hooksPath` to `.githooks`. **It never overwrites a file.** Files you already have are listed at the end, for you to merge by hand.
+The script copies everything under [`templates/`](https://github.com/alilibx/agentic-development-workflow/tree/main/templates) into your project and sets `core.hooksPath` to `.githooks`. **It never overwrites a file.** Files you already have are listed at the end, for you to merge by hand.
 
 From then on, the hook blocks commits on `main`, so do the rest on a branch:
 

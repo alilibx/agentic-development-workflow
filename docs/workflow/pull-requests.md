@@ -4,7 +4,7 @@
 
 - **One logical change.** Small enough to review honestly and to roll back cleanly.
 - **The title** follows Conventional Commits. It becomes the squash commit on `main`.
-- **The description** says what changed and why, how it was tested (commands and results; screenshots or a recording for UI), and links the issue. The [PR template](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.github/pull_request_template.md) turns each rule into a checkbox: "Tick what applies; explain anything you can't tick."
+- **The description** says what changed and why, how it was tested (commands and results; screenshots or a recording for UI), and links the issue. The [PR template](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/pull_request_template.md) turns each rule into a checkbox: "Tick what applies; explain anything you can't tick."
 - **Code, tests and docs together.** A PR that changes behaviour updates the docs that describe it, QA test cases included.
 
 ## Who checks what
@@ -20,7 +20,7 @@ Neither the bot nor the human replaces the other. The bot does the mechanical fi
 
 ## The review bot
 
-We use [CodeRabbit](https://coderabbit.ai), set strict (`profile: assertive`, `request_changes_workflow: true`), with `path_instructions` that restate the rules for each folder: "mutations can't make HTTP calls", "every outbound send must be gated", "strings go through i18n". See the [template](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.coderabbit.yaml).
+We use [CodeRabbit](https://coderabbit.ai), set strict (`profile: assertive`, `request_changes_workflow: true`), with `path_instructions` that restate the rules for each folder: "mutations can't make HTTP calls", "every outbound send must be gated", "strings go through i18n". See the [template](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.coderabbit.yaml).
 
 ### Responding to it
 

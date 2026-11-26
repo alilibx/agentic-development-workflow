@@ -103,4 +103,4 @@ When one vendor callback URL serves several environments or developers, route ea
 
 ### 6. The reviewer enforces it too
 
-Restate the gating rule in the review bot's `path_instructions` for the backend, and in the [PR template](https://github.com/alilibx/manzilo-workflow/blob/main/templates/.github/pull_request_template.md).
+Restate the gating rule in the review bot's `path_instructions` for the backend, and in the [PR template](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.github/pull_request_template.md).

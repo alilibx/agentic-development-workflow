@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "manzilo-workflow",
+      "name": "agentic-development-workflow",
       "devDependencies": {
         "mermaid": "^11.12.2",
         "vitepress": "1.6.4",
