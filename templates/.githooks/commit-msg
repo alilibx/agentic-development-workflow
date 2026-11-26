@@ -14,10 +14,18 @@
 
 msg_file="$1"
 
-found=$(grep -v '^#' "$msg_file" | grep -inE \
-  -e '^co-authored-by:.*(claude|anthropic)' \
-  -e '^claude-session:' \
-  -e 'generated with .*claude code')
+# Read the message the way git's default cleanup leaves it: stop at the
+# scissors line (`git commit -v` puts the diff below it) and skip # comments.
+# Each pattern must match a whole trailer or footer line, so prose that
+# mentions the footer passes.
+found=$(awk '
+  $0 == "# ------------------------ >8 ------------------------" { exit }
+  /^#/ { next }
+  { print NR ": " $0 }
+' "$msg_file" | grep -iE \
+  -e '^[0-9]+: co-authored-by:.*(claude|anthropic)' \
+  -e '^[0-9]+: claude-session:' \
+  -e '^[0-9]+: [^[:alnum:]]*generated with \[?claude code\]?(\([^)]*\))?[.[:space:]]*$')
 
 if [ -n "$found" ]; then
   echo "Attribution policy: no AI co-author trailers or 'generated with' lines in commits." >&2

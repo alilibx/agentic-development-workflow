@@ -35,7 +35,7 @@ It never overwrites existing files, and it never copies `global/`. See [Adopt it
 | [`.githooks/pre-commit`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/pre-commit) | Refuses commits on `main` | [Branching](/workflow/branching#the-pre-commit-hook) |
 | [`.githooks/pre-merge-commit`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/pre-merge-commit) | The same check for `git merge` | |
 | [`.githooks/commit-msg`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/commit-msg) | Optional: refuses AI co-author trailers and "generated with" lines | [Attribution](/claude/claude-md#attribution) |
-| [`.githooks/pre-commit.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/pre-commit.test.sh) | 24 checks against scratch repos: `bash .githooks/pre-commit.test.sh` | |
+| [`.githooks/pre-commit.test.sh`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/pre-commit.test.sh) | 27 checks against scratch repos: `bash .githooks/pre-commit.test.sh` | |
 
 ## GitHub
 

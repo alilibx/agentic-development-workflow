@@ -230,6 +230,23 @@ check "a human co-author is allowed" "$ok"
 out=$(printf 'docs: explain why we turned off Claude attribution\n' | attempt)
 [ $? -eq 0 ] && ok=1 || ok=0
 check "a subject that only mentions Claude is allowed" "$ok"
+out=$(printf 'fix: x\n\nRemove the Generated with Claude Code footer from PR bodies\n' | attempt)
+[ $? -eq 0 ] && ok=1 || ok=0
+check "a body line that mentions the footer in prose is allowed" "$ok"
+out=$(printf 'feat: x\n\n\360\237\244\226 Generated with [Claude Code](https://claude.com/claude-code)\n' | attempt)
+rc=$?
+if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q "Attribution policy"; then ok=1; else ok=0; fi
+check "the real footer line, with its emoji, is refused" "$ok"
+# git commit -v: the diff below the scissors line is not part of the message,
+# even when the change itself adds the footer to a file.
+printf '#!/bin/sh\nprintf "docs: add the PR body template\\n" | cat - "$1" > "$1.new" && mv "$1.new" "$1"\n' > "$SCRATCH/editor.sh"
+chmod +x "$SCRATCH/editor.sh"
+printf '\360\237\244\226 Generated with [Claude Code](https://claude.com/claude-code)\n' >> "$CM/pr-body.md"
+out=$(cd "$CM" && git add pr-body.md && GIT_EDITOR="$SCRATCH/editor.sh" git commit -q -v 2>&1)
+rc=$?
+subject=$(cd "$CM" && git log -1 --format=%s)
+[ "$rc" -eq 0 ] && [ "$subject" = "docs: add the PR body template" ] && ok=1 || ok=0
+check "git commit -v whose diff adds the footer is allowed (scissors honoured)" "$ok"
 echo
 
 echo "=== summary: $pass passed, $fail failed ==="
