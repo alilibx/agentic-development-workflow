@@ -36,10 +36,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # triggering_actor, not actor: on a re-run, github.actor is still whoever
+      # started the original run, so a non-admin re-running an admin's run
+      # would pass as the admin.
       - name: Only an admin, only on main
         env:
           GH_TOKEN: ${{ github.token }}
-          ACTOR: ${{ github.actor }}
+          ACTOR: ${{ github.triggering_actor }}
+          ORIGINAL_ACTOR: ${{ github.actor }}
         run: |
           if [ "$GITHUB_REF" != "refs/heads/main" ]; then
             echo "::error::Run break-glass from main, not $GITHUB_REF."
@@ -50,7 +54,7 @@ jobs:
             echo "::error::$ACTOR has '$perm' permission; break-glass needs admin."
             exit 1
           fi
-          echo "::warning::Break-glass run by $ACTOR: staging is skipped."
+          echo "::warning::Break-glass run triggered by $ACTOR (run started by $ORIGINAL_ACTOR): staging is skipped."
 
   staging:
     needs: ci
