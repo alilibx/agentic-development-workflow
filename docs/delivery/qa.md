@@ -29,7 +29,7 @@ Each module page starts with the routes or screens it covers, its related tracke
 
 Report bugs as you find them; don't batch them. Check the known-limitations list first. Include the test-case ID, the environment, the steps, the expected result (quoted from the case), what actually happened, and screenshots. Say whether it blocks a release.
 
-## Release sign-off
+## Release sign-off {#release-sign-off}
 
 QA completes this on **staging**, as a checklist in the release PR. **An incomplete checklist is an automatic reject.**
 

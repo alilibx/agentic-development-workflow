@@ -21,7 +21,7 @@ gitGraph
   commit id: "chore(main): release 0.5.0" tag: "v0.5.0"
 ```
 
-## Branch names
+## Branch names {#branch-names}
 
 `<prefix>/<key>-<id>-<short-slug>`, for example `feat/abc-136-contractor-assignment`.
 
@@ -47,13 +47,17 @@ chore(ci): pin release-please to a commit SHA
 feat(api)!: rename `amount` to `amountFils`
 ```
 
+::: warning No emoji in front of the type
+`✨ feat: add invoices` is not a Conventional Commit, and release-please ignores it: the change drops out of the changelog and the version bump. Some community commit commands add emoji by default; turn that off.
+:::
+
 PRs are **squash-merged**, so the PR title becomes the one commit on `main`. [release-please](/delivery/releases) reads those titles to choose the next version and write the changelog: `feat` bumps the minor version, `fix` bumps the patch, and `!` or a `BREAKING CHANGE:` footer bumps the major version (the minor version, before 1.0).
 
 ::: tip Merge commits instead?
 If your repo merges with merge commits, every commit in the PR lands on `main` and counts toward the changelog, so every commit message must follow the format. Pick one merge style and write it down.
 :::
 
-## The pre-commit hook
+## The pre-commit hook {#the-pre-commit-hook}
 
 A git hook, not a promise, keeps commits off `main`. [`.githooks/pre-commit`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/pre-commit) refuses any commit while the current branch is `main`:
 
@@ -66,9 +70,9 @@ if [ "$branch" = "main" ]; then
 fi
 ```
 
-`.githooks/pre-merge-commit` runs the same check for `git merge`, which doesn't run `pre-commit`. `.githooks/pre-commit.test.sh` tests both against scratch repos: a commit on `main` is refused, a feature branch, detached HEAD and a worktree are allowed, and a `merge --no-ff` into `main` is refused.
+`.githooks/pre-merge-commit` runs the same check for `git merge`, which doesn't run `pre-commit`. `.githooks/pre-commit.test.sh` tests both against scratch repos: a commit on `main` is refused, a feature branch, detached HEAD and a worktree are allowed, a `merge --no-ff` into `main` is refused, the root commit of an empty repo is allowed, and `PROTECTED_BRANCH` moves the guard to another branch name.
 
-**Activation.** The package manager's install script runs `git config core.hooksPath .githooks`. Worktrees share the repo's config, so one install covers all of them. See [Adopt it](/guide/adopt#_2-switch-the-hook-on-for-everyone).
+**Activation.** The package manager's install script runs `git config core.hooksPath .githooks`. Worktrees share the repo's config, so one install covers all of them. One catch: a relative `core.hooksPath` is resolved inside each worktree, so a worktree on a branch that predates `.githooks/` has no hook to run, and is silently unprotected. Rebase old branches onto `main` before working in them. See [Adopt it](/guide/adopt#switch-the-hook-on).
 
 **If it fires, create a branch.** Don't fight it.
 
@@ -82,4 +86,10 @@ We first blocked this with a Claude Code `PreToolUse` hook that read the shell c
 - `git commit --no-verify` skips it.
 - A push from a clone that never ran the install skips it.
 
-Server-side branch protection closes all three: require a PR, one approval, the CI checks, and linear history, and block force-pushes. Turn it on as soon as your GitHub plan allows. Until then, admins who bypass it in an emergency should say so in the PR (see [Break-glass](/delivery/releases#break-glass)).
+Server-side branch protection closes all three. Turn it on as soon as your GitHub plan allows, with:
+
+- a required PR, with one approval from someone other than the author;
+- the `CI` checks **and the review bot's check** required, with the branch up to date. Without the bot's check, `request_changes_workflow` in `.coderabbit.yaml` blocks nothing;
+- conversation resolution required, so an unanswered finding blocks the merge;
+- linear history, and no force-pushes or deletion;
+- *Do not allow bypassing the above settings* left **unchecked**, so an admin can override in an emergency and the override is in the audit log (see [Break-glass](/delivery/releases#break-glass)).

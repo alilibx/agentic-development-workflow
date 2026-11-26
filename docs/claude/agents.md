@@ -29,4 +29,4 @@ For larger work, one agent implements and the lead session reviews its result be
 
 ## When not to review
 
-After `gh pr create`, don't send a reviewer at the PR diff; the review bot does that. See [Pull requests and review](/workflow/pull-requests#don-t-review-the-same-pr-twice).
+After `gh pr create`, don't send a reviewer at the PR diff; the review bot does that. See [Pull requests and review](/workflow/pull-requests#no-second-review).
