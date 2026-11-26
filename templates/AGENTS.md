@@ -18,9 +18,9 @@ These rules apply to everyone who changes this repo, human or agent. `CLAUDE.md`
 
 ## Domain rules that must never break
 
-<!-- Invariants from the product. Examples: money is integer minor units, never floats; only LedgerService writes ledger rows; orders move forward only; "is X allowed" is answered in exactly one place. -->
-- <invariant>
-- <invariant>
+<!-- Invariants from the product. Examples: money is integer minor units, never floats; only LedgerService writes ledger rows; orders move forward only; "is X allowed" is answered in exactly one place. Each one names the test that fails when it breaks; an invariant with no test is a wish. -->
+- <invariant>, enforced by `<test path>`
+- <invariant>, enforced by `<test path>`
 
 ## Workflow
 

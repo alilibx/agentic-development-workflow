@@ -33,6 +33,8 @@ Practical rules:
 - **Show the environment on screen.** A `STAGING` ribbon, driven by the env var, means nobody mistakes a staging tab for production.
 - **Env vars live with the deployment** (host settings, backend env, GitHub environments). `.env.example` documents the shape. Nothing sensitive is committed.
 - **Hand-made infrastructure is written down.** If storage, CORS or DNS were set by hand, record the exact commands and a check, so the next environment can copy them.
+- **Vendor-side config has one writer.** Some config lives in the vendor's account and is shared by every environment that uses it: message templates, webhook URLs, product catalogues. Exactly one deployment per vendor account may change it; the others read it. Otherwise staging edits production's templates.
+- **Ops tools default to non-production.** An operator panel that can switch between deployments lists staging first, asks for confirmation before acting on production, and checks admin access per deployment.
 
 ## Side effects never reach real people from non-production
 
@@ -70,7 +72,8 @@ Some integrations have to work in staging, so QA can test them. Those get their 
 export function sendDecision(to: string): 'live' | 'suppress' {
   if (process.env.SMS_SEND_MODE !== 'live') return 'suppress'          // unset → suppress
   if (APP_ENV === 'production') return 'live'
-  const allowed = (process.env.SMS_TEST_RECIPIENTS ?? '').split(',')  // unset → nobody
+  const allowed = (process.env.SMS_TEST_RECIPIENTS ?? '')                // unset → nobody
+    .split(',').map((r) => r.trim()).filter(Boolean)
   return allowed.includes('*') || allowed.includes(to) ? 'live' : 'suppress'
 }
 ```
@@ -78,6 +81,8 @@ export function sendDecision(to: string): 'live' | 'suppress' {
 - **One chokepoint.** Every send goes through one function, and a test fails if anything else calls the provider's endpoint.
 - **A suppressed send returns a fake success** (id `suppressed-staging`), so the rest of the flow runs unchanged. Admin views show it as *Suppressed*.
 - **Set the recipient list before the mode.** `*` (anybody) is only for fully synthetic data.
+- **Scripts obey the same gate.** A script run by hand calls the vendor directly, so no deployment gate applies to it. It reads the same test-recipient list and exits when the recipient isn't on it.
+- **Check production before a release.** `APP_ENV` must be exactly `production` and each send mode `live`. A misspelt `prod` fails safe, which here means every production send is silently suppressed. The [release checklist](/delivery/qa#release-sign-off) has a line for it.
 
 ### 3. Sandboxes by URL or account
 

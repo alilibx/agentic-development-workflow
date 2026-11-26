@@ -7,6 +7,7 @@ Anything bigger than a fix starts as a written design that is committed to the r
 | `docs/superpowers/specs/` | `YYYY-MM-DD-<topic>-design.md` | The approved design: why, what, and what not |
 | `docs/superpowers/plans/` | `YYYY-MM-DD-<feature>.md` | The implementation plan: tasks, files, tests |
 | `docs/superpowers/research/` | `YYYY-MM-DD-<topic>-research.md` | Sourced research that feeds a spec (optional) |
+| `docs/superpowers/runbooks/` | `<KEY-id>-<topic>.md` | The deploy steps for one change, when it needs manual steps, a strict order or a one-off migration |
 
 The folder name comes from the [superpowers](https://github.com/obra/superpowers) Claude Code plugin. Its brainstorming skill writes specs there, and its writing-plans skill writes plans there. The format works without the plugin.
 
@@ -63,6 +64,17 @@ Two conventions pay for themselves:
 ```
 
 **Review focus** names the edge cases a reviewer must check, and ties each one to the test that covers it.
+
+## Runbooks {#runbooks}
+
+A change whose deploy isn't "merge and CI does the rest" gets a runbook: manual steps, an order that matters, a one-off migration, a vendor setting to flip. It is **read before the deploy, not during it**, and says:
+
+- each step, in order, with the exact command;
+- why the order matters;
+- what fails if a step is skipped;
+- how to check each step worked.
+
+The PR's deploy notes link it. Delete it once the change has reached every environment; the PR keeps the history.
 
 ## Research notes
 

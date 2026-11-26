@@ -15,11 +15,11 @@ Write your project's list into `AGENTS.md` as a table. Include the surfaces that
 
 | Surface | What usually ripples |
 |---|---|
-| Each user-facing app | Screens, strings in every language, right-to-left layout, empty and error states |
+| Each user-facing app | Screens, strings in every language, right-to-left layout, empty and error states, the narrowest supported width |
 | The admin or operator panel | Mirrors of every user-facing shape; ops-only tools |
 | The owning backend module | Schema, validation, the function itself |
 | **Every other module that reads the changed field** | Shared resolvers, uniqueness checks, indexes, search, scheduled jobs, exports, notifications |
-| Data lifecycle tools | The data wipe, retention, seed data, import scripts. A wipe "must account for every table" only if someone updates it. |
+| Data lifecycle tools | The data wipe, retention, seed data, import scripts. A [coverage test](/guide/standards#invariants-as-tests) fails when a new table isn't classified as wiped or preserved. |
 | Generated code | API types and clients. Regenerate and commit them; CI checks they're fresh. |
 | Messaging and AI | Conversation state, templates, routing, tool definitions |
 | Integrations and config | Auth providers, third-party APIs, env vars, and the [side-effect gate](/delivery/environments) for any new outbound send |
@@ -45,6 +45,10 @@ This is mandatory, and it happens **before the plan**, not after.
    | Integrations / env | no | no outbound send | |
 
 3. **Only then plan or build.** Every affected surface is in scope for the same change, or explicitly deferred with the user's agreement. Never drop one silently.
+
+## Strings in every language
+
+When the product ships in more than one language, make completeness a check, not a habit: a test or script fails when a key exists in one language file and not the others. Machine-translated or agent-written strings get a native speaker's review before merge; mark the PR blocked on it until then.
 
 ## Per-app instructions vs. the whole platform
 

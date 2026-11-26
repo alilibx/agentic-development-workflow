@@ -5,7 +5,9 @@ How we test, where test cases live, and how to report a bug.
 | Layer | Where |
 |---|---|
 | Test-case library | `qa/test-cases/<module>.md`, IDs like `MOD-001` |
-| Release sign-off | The checklist in the release PR |
+| Testing roadmap | `qa/roadmap.md` |
+| Release sign-off | A checklist comment on the release PR, naming the staging commit tested |
+| Answers to a QA round | `qa/rounds/<round>.md` |
 | Bug reports | `<tracker team / project, or the QA workbook>` |
 
 ## Reporting a bug

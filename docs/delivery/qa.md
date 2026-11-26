@@ -31,9 +31,13 @@ Report bugs as you find them; don't batch them. Check the known-limitations list
 
 ## Release sign-off {#release-sign-off}
 
-QA completes this on **staging**, as a checklist in the release PR. **An incomplete checklist is an automatic reject.**
+QA completes this on **staging** and posts it as a **comment** on the release PR, not in the PR body: release-please rewrites the body on every run, and ticked boxes there are lost. **An incomplete checklist is an automatic reject.**
+
+The comment names the staging commit QA tested (the deploy alert and the health endpoint both show it). The release PR is merged only while `main` is still at that commit. If anything merged since, its flows are re-checked on staging and QA posts a new comment with the new SHA. See [Releases](/delivery/releases).
 
 ```markdown
+**Signed off on staging at:** <commit SHA>
+
 **Core flows** (from the testing roadmap)
 - [ ] Sign-up and onboarding
 - [ ] <core flow>
@@ -49,12 +53,26 @@ QA completes this on **staging**, as a checklist in the release PR. **An incompl
 - [ ] No console errors on the main flows
 - [ ] Right-to-left and every language render correctly on changed screens
 - [ ] Sign-in, sign-out and switching accounts work
-- [ ] Phone-size layout on changed screens
+- [ ] Changed screens work at the narrowest supported width (<320 px, or your floor>)
 
 **Environment**
 - [ ] The staging ribbon is visible
 - [ ] `main` is green in CI
+- [ ] Production's environment is set for go-live: `APP_ENV=production` exactly, and each integration's send mode is `live`
 ```
+
+Name the narrowest width you support (320 px is a common floor) instead of "phone-size", so the check has an answer.
+
+## After a QA round {#after-a-qa-round}
+
+QA's results live in QA's own system of record (a workbook, a test-management tool). Development answers each round in writing, in `qa/rounds/<round>.md` ([template](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/docs/qa/rounds/_template.md)):
+
+- **Every defect, mapped.** QA's defect ID, the tracker issue it became, and its status: fixed and ready to retest, still open, or won't fix (with the reason).
+- **"Fixed, not browser-confirmed" is said out loud.** A fix proven only by tests is flagged, so QA knows to read before re-testing.
+- **Severity re-rates and scope decisions,** with who decided.
+- **A regression list for the next round:** the flows the fixes touched.
+
+Then update **QA's system of record**, not a copy: the status and a one-line comment per defect, with the tracker link. If it's a file, upload a new version of the same file, so QA keeps one link and the history.
 
 ## After a release
 

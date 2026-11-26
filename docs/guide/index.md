@@ -38,8 +38,9 @@ Most teams already *say* "don't push to main" and "keep the docs current". Here,
 | Rule | Enforced by |
 |---|---|
 | No commits to `main` | A git `pre-commit` hook, switched on by `bun install` |
-| Every change has an issue, and the issue's status is true | The `/task` skill and a PR-lifecycle hook |
+| Every change has an issue, and the issue's status is true | The `/task` skill. A PR-lifecycle hook reminds the agent; it can't enforce. |
 | Code is reviewed | CI, a review bot, a human, and sub-agent reviews before the PR |
+| Invariants hold | Tests that fail when a rule breaks, including ratchets that can only shrink |
 | Only tested code reaches production | Staging deploys first; production takes only release tags |
 | Nothing reaches real people from staging | Side-effect gates that fail safe |
 | Docs match the code | Docs updated in the same PR, checked by `docs-auditor` |

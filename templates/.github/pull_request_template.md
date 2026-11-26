@@ -17,4 +17,4 @@ Tick what applies; explain anything you can't tick.
 - [ ] Docs, including QA test cases, describe the new behaviour.
 - [ ] New outbound side effects are gated off outside production.
 - [ ] No secrets or real people's data in code, tests or screenshots.
-- [ ] Deploy notes: new env vars, secrets or manual steps are in `docs/engineering/`.
+- [ ] Deploy notes: new env vars and secrets are in `docs/engineering/`; manual steps or a strict order are in a runbook (`docs/superpowers/runbooks/<KEY-id>-<topic>.md`), linked here.
