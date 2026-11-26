@@ -1,0 +1,29 @@
+#!/bin/sh
+# Optional. Refuse commit messages that carry AI attribution: a Co-authored-by
+# trailer naming Claude or Anthropic, a Claude-Session trailer, or a
+# "Generated with Claude Code" line. See the manual: Claude Code -> CLAUDE.md
+# and AGENTS.md -> Attribution. Delete this file if your policy allows them.
+#
+# Why a hook as well as the settings: Claude Code's attribution setting only
+# covers its own default trailers. Injected reminders, other agents and
+# copy-pasted messages can still add them, and a squash merge copies
+# Co-authored-by trailers from every branch commit into main.
+#
+# Residual: a squash merge made in GitHub's web UI writes its message on the
+# server, so no local hook sees it. Read the squash message before you merge.
+
+msg_file="$1"
+
+found=$(grep -v '^#' "$msg_file" | grep -inE \
+  -e '^co-authored-by:.*(claude|anthropic)' \
+  -e '^claude-session:' \
+  -e 'generated with .*claude code')
+
+if [ -n "$found" ]; then
+  echo "Attribution policy: no AI co-author trailers or 'generated with' lines in commits." >&2
+  echo "Remove these lines from the message and commit again:" >&2
+  printf '%s\n' "$found" | sed 's/^/  line /' >&2
+  exit 1
+fi
+
+exit 0
