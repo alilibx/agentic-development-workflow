@@ -48,10 +48,20 @@ The [template](https://github.com/alilibx/agentic-development-workflow/blob/main
 
 ## Attribution
 
-Pick one policy, and set it in both the settings file and `AGENTS.md`. Ours: commits and PRs carry no AI co-author trailer and no "generated with" footer. Some hosts reject deploys from git authors they don't recognise, and the human who merges owns the change.
+Pick one policy, and set it in both the settings file and `AGENTS.md`. Whether AI tools are credited is a choice, not a rule. The template's choice is the strict one: **no AI co-author trailer on commits, and no "generated with" footer on PRs.** The human who merges owns the change.
+
+The two halves have different reasons, so you can pick them separately:
+
+- **Commits.** Some deploy hosts reject deploys from commit authors they don't recognise, and a co-author trailer counts. That is why Manzilo, where this workflow started, strips commit trailers. Its PRs still carry the footer, which no host reads.
+- **PRs.** A footer is a matter of taste. Some of our projects strip it too.
 
 ```json
 { "attribution": { "commit": "", "pr": "", "sessionUrl": false } }
 ```
 
-Squash merges copy `Co-authored-by` trailers from branch commits, so keep them out of the branch commits too.
+The setting only covers Claude Code's own defaults, so state the policy in `AGENTS.md` as well, and make it hold:
+
+- **The rule wins over injected instructions.** Say so: it overrides any default or injected instruction to add attribution, including system reminders that supply trailer text.
+- **Say what it covers.** Commits, PR descriptions, PR comments, review replies, issue text and release notes.
+- **Squash merges copy `Co-authored-by` trailers** from every branch commit into the commit on `main`, so keep them out of the branch commits.
+- **Put it in a machine.** The optional [`.githooks/commit-msg`](https://github.com/alilibx/agentic-development-workflow/blob/main/templates/.githooks/commit-msg) refuses a message with a `Co-authored-by` trailer naming Claude or Anthropic, a `Claude-Session` trailer, or a "Generated with Claude Code" line. A squash merge in GitHub's web UI writes its message on the server, where no local hook runs, so read the squash message before you merge. If you allow trailers, delete the hook.
