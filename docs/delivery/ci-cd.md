@@ -49,8 +49,10 @@ Public repos get all of them on every plan. GitHub has changed these rules befor
 
 The template works on every plan, and gets stronger when environments are available:
 
-- **Default: suffixed repository secrets.** `deploy.yml` reads `DEPLOY_TOKEN_STAGING` or `DEPLOY_TOKEN_PRODUCTION`, and `HEALTH_URL_STAGING` or `HEALTH_URL_PRODUCTION`, picking the suffix from two literal strings. A missing value fails the step; nothing falls back to the other tier.
-- **Upgrade: environments.** When your plan has them, move each suffixed secret into its environment (keep the names), and uncomment the `environment:` line of the `deploy` job in `deploy.yml`. You get deployment rules (only tags deploy to `production`), and on Enterprise or a public repo, a required reviewer on production: the approval gate that is the target.
+- **Secrets: suffixed repository secrets, by default.** `deploy.yml` reads `DEPLOY_TOKEN_STAGING` or `DEPLOY_TOKEN_PRODUCTION`, and `HEALTH_URL_STAGING` or `HEALTH_URL_PRODUCTION`, picking the suffix from two literal strings. A missing value fails the step; nothing falls back to the other tier. When your plan has environment secrets, you can move each one into its environment; keep the names, because an environment secret overrides the repository secret of the same name.
+- **Gates: the environment, always named.** The `deploy` job sets `environment:` to the tier it deploys (`inputs.environment`), and the line stays on. Whatever rules you configure on the environment apply: deployment rules (only tags deploy to `production`), and on Enterprise or a public repo, a required reviewer on production, the approval gate that is the target. GitHub [creates a referenced environment that doesn't exist yet](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment), with no rules or secrets, so on a plan that can't configure environments the line is harmless.
+
+Don't comment the `environment:` line out to "simplify" the template: that silently drops every rule configured on the environment, including the production approval. If your runs ever fail because of it, removing it is an explicit decision: record it in your project's `docs/engineering/ci-cd.md`, with the gates you lose.
 
 Say in your project's `docs/engineering/ci-cd.md` which mode you're in. If you're on the default, say the production approval gate is deferred and why, so nobody assumes it exists.
 

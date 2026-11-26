@@ -7,11 +7,13 @@ name: Deploy
 # never read each other's values:
 #   secrets  DEPLOY_TOKEN_STAGING, DEPLOY_TOKEN_PRODUCTION, NOTIFY_TOPIC
 #   vars     HEALTH_URL_STAGING,   HEALTH_URL_PRODUCTION
-# They work as plain repository secrets on any GitHub plan. If your plan has
-# environment secrets for this repo (public repos, or Pro/Team/Enterprise for
-# private ones), you can move each one into its environment and uncomment
-# `environment:` below. Keep the suffixed names either way. See the manual:
-# Delivery -> CI/CD -> "Secrets per tier".
+# They work as plain repository secrets on any GitHub plan, and stay the
+# default source. The deploy job also names its GitHub environment, always:
+# whatever protection that environment has (deployment branch/tag rules,
+# required reviewers on production) applies, and where your plan can't
+# configure environments, GitHub creates an empty one and it gates nothing.
+# Keep the suffixed names even after moving a secret into its environment.
+# See the manual: Delivery -> CI/CD -> "Secrets per tier".
 on:
   workflow_call:
     inputs:
@@ -33,11 +35,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Upgrade path: with GitHub environments available, uncomment this to get
-    # deployment branch/tag rules and, where your plan has them, required
-    # reviewers on production.
-    # environment: ${{ inputs.environment }}
-    #
+    # Always on. Commenting it out silently drops every rule configured on
+    # the environment, including a required reviewer on production.
+    environment: ${{ inputs.environment }}
     # Never cancel a deploy in flight: a cancelled deploy leaves the
     # environment stale, and nobody notices for days.
     concurrency:
